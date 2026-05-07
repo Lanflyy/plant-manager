@@ -1,4 +1,4 @@
-# Habbo Plants TS
+# PlantManager
 
 A browser extension for treating and composting monster plants in Habbo.
 

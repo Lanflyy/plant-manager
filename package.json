@@ -1,5 +1,5 @@
 {
-  "name": "habbo-plant-ts",
+  "name": "plant-manager",
   "version": "1.0.0",
   "description": "Extension to automate treating/composting monster plants in current room",
   "type": "module",
