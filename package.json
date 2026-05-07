@@ -1,0 +1,27 @@
+{
+  "name": "habbo-plant-ts",
+  "version": "1.0.0",
+  "description": "Extension to automate treating/composting monster plants in current room",
+  "type": "module",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "test": "tsx watch index.ts -p 9092"
+  },
+  "keywords": [],
+  "author": "Lanflyy",
+  "license": "ISC",
+  "dependencies": {
+    "gnode-api": "^0.2.16"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "standard": "^17.1.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  },
+  "eslintConfig": {
+    "extends": "./node_modules/standard/eslintrc.json"
+  }
+}
