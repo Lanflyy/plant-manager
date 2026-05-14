@@ -89,7 +89,16 @@ public final class PlantManagerFeature {
 
         if (TREAT_COMMAND.equals(text)) {
             processing = true;
-            sendSystemMessage("Treating plants started... (Found " + plants.size() + " plants)");
+            long livingCount = plants.values().stream().filter(isDead -> !isDead).count();
+            long deadCount = plants.size() - livingCount;
+            StringBuilder msg = new StringBuilder("Treating plants started... (");
+            msg.append(livingCount).append(" living");
+            if (deadCount > 0) {
+                msg.append(", ").append(deadCount).append(" dead ignored)");
+            } else {
+                msg.append(")");
+            }
+            sendSystemMessage(msg.toString());
             log.debug("[Plants] Treat command started. Plants in memory: {}", plants.size());
             processPlants(ActionType.TREAT);
         } else if (COMPOST_COMMAND.equals(text)) {
