@@ -5,7 +5,7 @@
         </layout>
     </appender>
 
-    <logger name="extension" level="DEBUG" additivity="false">
+    <logger name="extension" level="INFO" additivity="false">
         <appender-ref ref="UI" />
     </logger>
 
