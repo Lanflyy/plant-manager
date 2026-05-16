@@ -14,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import gearth.extensions.ExtensionForm;
+import extension.util.SleepRateLimit;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -24,6 +25,7 @@ public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandle
     private final AtomicInteger skippedDueWellbeing = new AtomicInteger(0);
     private static final int WELLBEING_THRESHOLD_SECONDS = 3600; // 1 hour
     private static final Map<Integer, CompletableFuture<PetInfoEntity>> petInfoRequests = new ConcurrentHashMap<>();
+    private static final int PETINFO_MAX_RETRIES = 5;
 
     @Override
     public void execute() {
@@ -49,7 +51,7 @@ public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandle
     @Override
     public boolean process(HEntity plant) {
         // First request pet info and check wellbeing
-        PetInfoEntity info = requestPetInfo(plant.getId(), 5000);
+        PetInfoEntity info = requestPetInfo(plant.getId(), 3000);
         if (info == null) {
             log.debug("[Treat] No PetInfo received for plant {} - skipping", plant.getId());
             return false;
@@ -62,6 +64,8 @@ public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandle
             return false;
         }
 
+        SleepRateLimit.sleepRateLimit();
+
         String packetHeader = "RespectPet";
         boolean sent = manager.getExtension().sendToServer(new HPacket(packetHeader, HMessage.Direction.TOSERVER, plant.getId()));
         log.debug("[{}] Plant {} {}", packetHeader, plant.getId(), sent ? "sent" : "failed");
@@ -72,21 +76,31 @@ public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandle
     }
 
     private PetInfoEntity requestPetInfo(int petId, long timeoutMillis) {
-        CompletableFuture<PetInfoEntity> future = new CompletableFuture<>();
-        petInfoRequests.put(petId, future);
-        boolean sent = manager.getExtension().sendToServer(new HPacket("GetPetInfo", HMessage.Direction.TOSERVER, petId));
-        if (!sent) {
-            petInfoRequests.remove(petId);
-            log.debug("[PetInfo] Failed to send GetPetInfo for {}", petId);
-            return null;
+        for (int attempt = 1; attempt <= PETINFO_MAX_RETRIES; attempt++) {
+            CompletableFuture<PetInfoEntity> future = new CompletableFuture<>();
+            petInfoRequests.put(petId, future);
+            // rate-limit before sending GetPetInfo
+            SleepRateLimit.sleepRateLimit();
+            boolean sent = manager.getExtension().sendToServer(new HPacket("GetPetInfo", HMessage.Direction.TOSERVER, petId));
+            if (!sent) {
+                petInfoRequests.remove(petId);
+                log.debug("[PetInfo] Failed to send GetPetInfo for {}", petId);
+                return null;
+            }
+            try {
+                PetInfoEntity info = future.get(timeoutMillis, TimeUnit.MILLISECONDS);
+                return info;
+            } catch (Exception e) {
+                petInfoRequests.remove(petId);
+                log.debug("[PetInfo] Timed out or failed waiting for PetInfo for {} (attempt {}/{})", petId, attempt, PETINFO_MAX_RETRIES);
+                if (attempt < PETINFO_MAX_RETRIES) {
+                    log.debug("[PetInfo] Retrying GetPetInfo for {} (next attempt {}/{})", petId, attempt + 1, PETINFO_MAX_RETRIES);
+                } else {
+                    log.debug("[PetInfo] All retries exhausted for {}", petId);
+                }
+            }
         }
-        try {
-            return future.get(timeoutMillis, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            petInfoRequests.remove(petId);
-            log.debug("[PetInfo] Timed out or failed waiting for PetInfo for {}", petId);
-            return null;
-        }
+        return null;
     }
 
     public static void handlePetInfo(HMessage hMessage) {
