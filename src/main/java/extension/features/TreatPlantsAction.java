@@ -1,6 +1,7 @@
 package extension.features;
 
 import extension.util.NotificationUtils;
+import extension.util.PlantSettings;
 import extension.util.PlantUtils;
 import extension.entity.PetInfoEntity;
 import gearth.extensions.parsers.HEntity;
@@ -51,8 +52,13 @@ public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandle
     @Override
     public boolean process(HEntity plant) {
         // Optionally request pet info and check wellbeing
-        if (extension.util.PlantSettings.isRequestPetInfoBeforeTreat()) {
+        if (PlantSettings.isRequestPetInfoBeforeTreat()) {
             PetInfoEntity info = requestPetInfo(plant.getId(), 3000);
+            if (!processor.isProcessing()) {
+                log.debug("[Treat] Processing aborted during wellbeing check for plant {}", plant.getId());
+                return false;
+            }
+
             if (info == null) {
                 log.debug("[Treat] No PetInfo received for plant {} - skipping", plant.getId());
                 return false;
@@ -79,7 +85,7 @@ public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandle
     }
 
     private PetInfoEntity requestPetInfo(int petId, long timeoutMillis) {
-        for (int attempt = 1; attempt <= PETINFO_MAX_RETRIES; attempt++) {
+        for (int attempt = 1; attempt <= PETINFO_MAX_RETRIES && processor.isProcessing(); attempt++) {
             CompletableFuture<PetInfoEntity> future = new CompletableFuture<>();
             petInfoRequests.put(petId, future);
             // rate-limit before sending GetPetInfo
@@ -103,6 +109,9 @@ public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandle
                     NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Failed to retrieve plant info for pet " + petId + " after " + PETINFO_MAX_RETRIES + " attempts");
                 }
             }
+        }
+        if(!processor.isProcessing()){
+            log.debug("[TreatPlantsAction] requestPetInfo for {} aborted because processing was aborted", petId);
         }
         return null;
     }
