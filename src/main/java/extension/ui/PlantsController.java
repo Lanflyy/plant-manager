@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import extension.util.PlantSettings;
+import gearth.misc.Cacher;
 
 import org.slf4j.LoggerFactory;
 
@@ -114,13 +115,19 @@ public class PlantsController {
         }
     }
 
+    private static final String LOG_LEVEL_CACHE_KEY = "plants.logLevel";
+    private static final String DEFAULT_LOG_LEVEL = "INFO";
+    private static final ObservableList<String> VALID_LOG_LEVELS =
+            FXCollections.observableArrayList("ERROR", "WARN", "INFO", "DEBUG", "TRACE", "OFF");
+
     private void initLogLevelControl() {
         try {
             if (logLevelCombo == null) return;
-            ObservableList<String> items = FXCollections.observableArrayList("ERROR", "WARN", "INFO", "DEBUG", "TRACE", "OFF");
-            logLevelCombo.setItems(items);
-            // default to INFO
-            logLevelCombo.getSelectionModel().select("INFO");
+            logLevelCombo.setItems(VALID_LOG_LEVELS);
+
+            // Load persisted level from cache.json, fallback to INFO if missing or invalid
+            String cached = loadCachedLogLevel();
+            logLevelCombo.getSelectionModel().select(cached);
 
             // Use default cell rendering (no additional highlight)
 
@@ -136,11 +143,27 @@ public class PlantsController {
         }
     }
 
+    private String loadCachedLogLevel() {
+        try {
+            Object cached = Cacher.get(LOG_LEVEL_CACHE_KEY);
+            if (cached instanceof String) {
+                String value = ((String) cached).toUpperCase();
+                if (VALID_LOG_LEVELS.contains(value)) {
+                    return value;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("[Plants] Could not read log level from cache, using default", e);
+        }
+        return DEFAULT_LOG_LEVEL;
+    }
+
     private void setLogLevel(String levelName) {
         try {
             Level level = Level.toLevel(levelName, Level.INFO);
             Logger logger = (Logger) LoggerFactory.getLogger("extension");
             logger.setLevel(level);
+            Cacher.put(LOG_LEVEL_CACHE_KEY, level.toString());
             log.info("[Plants] Set log level to {}", level);
         } catch (Exception e) {
             log.error("Failed to set log level", e);
