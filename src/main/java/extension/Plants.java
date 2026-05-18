@@ -8,7 +8,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Button;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.TextArea;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,14 +31,12 @@ public class Plants extends ExtensionForm {
     private CheckBox chkRequestPetInfo;
     @FXML
     private Button btnPetInfoHelp;
-    @FXML
-    private Tooltip ttPetInfoHelp;
 
     private PlantsController uiController;
     private PlantManagerFeature plantManagerFeature;
 
     public void initialize() {
-        uiController = new PlantsController(commandsArea, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, ttPetInfoHelp);
+        uiController = new PlantsController(commandsArea, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp);
         uiController.initialize();
     }
 

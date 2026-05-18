@@ -35,13 +35,11 @@ public class PlantsController {
         TextArea logArea,
         ComboBox<String> logLevelCombo,
         CheckBox chkRequestPetInfo,
-        Button btnPetInfoHelp,
-        Tooltip ttPetInfoHelp
+        Button btnPetInfoHelp
     ) {
         this.logLevelCombo = logLevelCombo;
         this.chkRequestPetInfo = chkRequestPetInfo;
         this.btnPetInfoHelp = btnPetInfoHelp;
-        this.ttPetInfoHelp = ttPetInfoHelp;
         this.view = new PlantsView(commandsArea, logArea);
     }
 
@@ -88,9 +86,7 @@ public class PlantsController {
 
             // Prepare a programmatic tooltip and attach it to the button (hover shows it)
             try {
-                String tip = (ttPetInfoHelp != null && ttPetInfoHelp.getText() != null)
-                        ? ttPetInfoHelp.getText()
-                        : "When enabled, the extension will request plant (pet) info before treating it.\n" +
+                String tip = "When enabled, the extension will request plant (pet) info before treating it.\n" +
                         "This is done to avoid sending treats that shouldn't be sent (e.g. if well being is already very high).";
 
                 ttPetInfoHelp = new Tooltip(tip);
