@@ -50,8 +50,14 @@ public class Plants extends ExtensionForm {
         }
     }
 
+    private boolean isAlreadyConnected = false;
+
     @Override
     protected void initExtension() {
+        // If the PacketInfoManager has data during initExtension, it means the extension
+        // was attached while G-Earth was already connected to the game client.
+        isAlreadyConnected = getPacketInfoManager() != null && !getPacketInfoManager().getPacketInfoList().isEmpty();
+        
         plantManagerFeature = new PlantManagerFeature(this);
         plantManagerFeature.install();
     }
@@ -66,6 +72,13 @@ public class Plants extends ExtensionForm {
     @Override
     protected void onStartConnection() {
         log.debug("[Connection] Started");
+        
+        // Only request info manually if the extension was attached mid-session.
+        // Otherwise, the client will send it naturally during the login sequence.
+        if (isAlreadyConnected && plantManagerFeature != null) {
+            plantManagerFeature.requestInfo();
+            isAlreadyConnected = false; // Reset so reconnecting behaves normally
+        }
     }
 
     @Override

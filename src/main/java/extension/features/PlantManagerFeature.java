@@ -54,8 +54,12 @@ public final class PlantManagerFeature {
         extension.intercept(HMessage.Direction.TOSERVER, "GetGuestRoom", this::handleGetGuestRoom);
         extension.intercept(HMessage.Direction.TOSERVER, "Quit", this::handleQuit);
         
-        extension.sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER));
         log.info("[Plants] Extension installed");
+    }
+
+    public void requestInfo() {
+        boolean sent = extension.sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER));
+        log.debug("[InfoRetrieve] Info requested {}", sent ? "sent" : "failed");
     }
 
     public void reset() {
