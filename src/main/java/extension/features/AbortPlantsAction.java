@@ -6,10 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-public class AbortPlantsAction implements PlantUserAction {
+public class AbortPlantsAction implements UserActionExecutor {
 
     private final PlantManagerFeature manager;
-    private final PlantProcessor processor;
+    private final BulkItemProcessor processor;
 
     @Override
     public void execute() {

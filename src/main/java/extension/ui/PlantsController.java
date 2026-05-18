@@ -15,6 +15,8 @@ import javafx.scene.layout.Region;
 import lombok.extern.slf4j.Slf4j;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import extension.util.PlantSettings;
+
 import org.slf4j.LoggerFactory;
 
 @Slf4j
@@ -27,7 +29,14 @@ public class PlantsController {
 
     private final PlantsView view;
 
-    public PlantsController(TextArea commandsArea, TextArea logArea, ComboBox<String> logLevelCombo, CheckBox chkRequestPetInfo, Button btnPetInfoHelp, Tooltip ttPetInfoHelp) {
+    public PlantsController(
+        TextArea commandsArea,
+        TextArea logArea,
+        ComboBox<String> logLevelCombo,
+        CheckBox chkRequestPetInfo,
+        Button btnPetInfoHelp,
+        Tooltip ttPetInfoHelp
+    ) {
         this.logLevelCombo = logLevelCombo;
         this.chkRequestPetInfo = chkRequestPetInfo;
         this.btnPetInfoHelp = btnPetInfoHelp;
@@ -47,8 +56,8 @@ public class PlantsController {
         try {
             if (chkRequestPetInfo == null) return;
             // initialize from current setting
-            chkRequestPetInfo.setSelected(extension.util.PlantSettings.isRequestPetInfoBeforeTreat());
-            chkRequestPetInfo.setOnAction(e -> extension.util.PlantSettings.setRequestPetInfoBeforeTreat(chkRequestPetInfo.isSelected()));
+            chkRequestPetInfo.setSelected(PlantSettings.isRequestPetInfoBeforeTreat());
+            chkRequestPetInfo.setOnAction(e -> PlantSettings.setRequestPetInfoBeforeTreat(chkRequestPetInfo.isSelected()));
         } catch (Exception e) {
             log.error("Failed to initialize settings control", e);
         }
@@ -80,10 +89,11 @@ public class PlantsController {
             try {
                 String tip = (ttPetInfoHelp != null && ttPetInfoHelp.getText() != null)
                         ? ttPetInfoHelp.getText()
-                        : "When enabled, the extension will request plant (pet) info before treating to verify wellbeing and avoid accidental treats.";
-                
+                        : "When enabled, the extension will request plant (pet) info before treating it.\n" +
+                        "This is done to avoid sending treats that shouldn't be sent (e.g. if well being is already very high).";
+
                 ttPetInfoHelp = new Tooltip(tip);
-                
+
                 btnPetInfoHelp.setOnMouseEntered(e -> {
                     if (ttPetInfoHelp != null && !ttPetInfoHelp.isShowing()) {
                         Point2D p = btnPetInfoHelp.localToScreen(0, btnPetInfoHelp.getHeight());

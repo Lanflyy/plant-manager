@@ -9,17 +9,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import extension.entity.ACTION_COMMAND_TYPE;
 import extension.util.NotificationUtils;
 
 @Slf4j
-public class PlantProcessor {
+public class BulkItemProcessor {
 
     private final PlantManagerFeature manager;
     private final ExtensionForm extension;
     private final ExecutorService executor;
     private final AtomicBoolean processing = new AtomicBoolean(false);
 
-    public PlantProcessor(PlantManagerFeature manager, ExtensionForm extension) {
+    public BulkItemProcessor(PlantManagerFeature manager, ExtensionForm extension) {
         this.manager = manager;
         this.extension = extension;
         this.executor = Executors.newSingleThreadExecutor(r -> {
@@ -29,34 +30,30 @@ public class PlantProcessor {
         });
     }
 
-    public boolean startProcessing(PlantManagerFeature.ActionCommandType actionType, PlantProcessingHandler handler) {
+    public <T> boolean startProcessing(ItemProcessingHandler<T> handler, java.util.Collection<T> items) {
         if (!processing.compareAndSet(false, true)) {
             log.debug("[Plants] Processing already running");
             NotificationUtils.showSystemNotificationToUser(extension, "Plant processing is already running. Abort first the previous one");
             return false;
         }
 
-        executor.submit(() -> runProcessing(actionType, handler));
+        executor.submit(() -> runProcessing(handler, items));
         return true;
     }
 
-    private void runProcessing(PlantManagerFeature.ActionCommandType actionType, PlantProcessingHandler handler) {
+    private <T> void runProcessing(ItemProcessingHandler<T> handler, java.util.Collection<T> items) {
+        ACTION_COMMAND_TYPE actionType = handler.getActionCommandType();
         int count = 0;
         try {
-            if (handler == null) {
-                log.error("No handler provided for action {}", actionType);
-                return;
-            }
-
-            for (HEntity plant : manager.getPlantsSnapshot()) {
+            for (T item : items) {
                 if (!processing.get()) {
                     break;
                 }
 
                 boolean processed = false;
                 try {
-                    if (handler.shouldProcess(plant)) {
-                        processed = handler.process(plant);
+                    if (handler.shouldProcess(item)) {
+                        processed = handler.process(item);
                     }
                 } catch (Exception e) {
                     log.debug("[Plants] Handler processing encountered an error", e);
@@ -70,14 +67,14 @@ public class PlantProcessor {
             }
 
             if (processing.get()) {
-                log.debug("[Plants] Finished. {} plants {}", count, actionType.getVerb());
+                log.debug("[Plants] Finished. {} items {}", count, actionType.getVerb());
                 try {
                     handler.onFinished(count);
                 } catch (Exception e) {
                     log.debug("[Plants] Handler onFinished threw an exception", e);
                 }
                 try {
-                    handler.showSystemNotification(extension, actionType, count);
+                    handler.showSystemNotification(extension, count);
                 } catch (Exception e) {
                     log.debug("[Plants] Handler showSystemNotification threw an exception", e);
                 }
@@ -98,8 +95,6 @@ public class PlantProcessor {
     public boolean isProcessing() {
         return processing.get();
     }
-
-    // Per-action processing moved to PlantProcessingHandler implementations
 
     private void sleep() {
         try {

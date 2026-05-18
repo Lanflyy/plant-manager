@@ -1,5 +1,6 @@
 package extension.features;
 
+import extension.entity.ACTION_COMMAND_TYPE;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
 import gearth.extensions.parsers.HEntity;
@@ -10,16 +11,16 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CompostPlantsAction implements PlantUserAction, PlantProcessingHandler {
+public class CompostPlantsAction implements UserActionExecutor, ItemProcessingHandler<HEntity> {
 
     private final PlantManagerFeature manager;
-    private final PlantProcessor processor;
+    private final BulkItemProcessor processor;
 
     @Override
     public void execute() {
         NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Composting plants started... (Found " + manager.getPlantCount() + " plants)");
         log.debug("[Plants] Compost command started. Plants in memory: {}", manager.getPlantCount());
-        processor.startProcessing(PlantManagerFeature.ActionCommandType.COMPOST, this);
+        processor.startProcessing(this, manager.getPlantsSnapshot());
     }
 
     @Override
@@ -38,4 +39,10 @@ public class CompostPlantsAction implements PlantUserAction, PlantProcessingHand
         }
         return false;
     }
+
+	@Override
+	public ACTION_COMMAND_TYPE getActionCommandType() {
+		return ACTION_COMMAND_TYPE.COMPOST;
+	}
+
 }

@@ -1,6 +1,6 @@
 package extension.features;
 
 @FunctionalInterface
-public interface PlantUserAction {
+public interface UserActionExecutor {
     void execute();
 }

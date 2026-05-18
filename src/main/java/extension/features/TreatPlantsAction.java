@@ -3,6 +3,7 @@ package extension.features;
 import extension.util.NotificationUtils;
 import extension.util.PlantSettings;
 import extension.util.PlantUtils;
+import extension.entity.ACTION_COMMAND_TYPE;
 import extension.entity.PetInfoEntity;
 import gearth.extensions.parsers.HEntity;
 import gearth.protocol.HMessage;
@@ -19,10 +20,10 @@ import extension.util.SleepRateLimit;
 
 @Slf4j
 @RequiredArgsConstructor
-public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandler {
+public class TreatPlantsAction implements UserActionExecutor, ItemProcessingHandler<HEntity> {
 
     private final PlantManagerFeature manager;
-    private final PlantProcessor processor;
+    private final BulkItemProcessor processor;
     private final AtomicInteger skippedDueWellbeing = new AtomicInteger(0);
     private static final int WELLBEING_THRESHOLD_SECONDS = 3600; // 1 hour
     private static final Map<Integer, CompletableFuture<PetInfoEntity>> petInfoRequests = new ConcurrentHashMap<>();
@@ -41,7 +42,7 @@ public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandle
         }
         NotificationUtils.showSystemNotificationToUser(manager.getExtension(), msg.toString());
         log.debug("[Plants] Treat command started. Plants in memory: {}", manager.getPlantCount());
-        processor.startProcessing(PlantManagerFeature.ActionCommandType.TREAT, this);
+        processor.startProcessing(this, manager.getPlantsSnapshot());
     }
 
     @Override
@@ -139,12 +140,17 @@ public class TreatPlantsAction implements PlantUserAction, PlantProcessingHandle
     }
 
     @Override
-    public void showSystemNotification(ExtensionForm extension, PlantManagerFeature.ActionCommandType actionType, int processedCount) {
+    public void showSystemNotification(ExtensionForm extension, int processedCount) {
         int skipped = skippedDueWellbeing.get();
-        String msg = "All plants have been " + actionType.getVerb() + " (" + processedCount + ")";
+        String msg = "All plants have been " + getActionCommandType().getVerb() + " (" + processedCount + ")";
         if (skipped > 0) {
             msg += ", skipped due to wellbeing: " + skipped;
         }
         NotificationUtils.showSystemNotificationToUser(manager.getExtension(), msg);
     }
+
+	@Override
+	public ACTION_COMMAND_TYPE getActionCommandType() {
+		return ACTION_COMMAND_TYPE.TREAT;
+	}
 }
