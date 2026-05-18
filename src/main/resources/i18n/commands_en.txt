@@ -1,6 +1,8 @@
 Available commands:
 
-- :plants           -   Treat every living plant in the current room.
-- :plants compost   -   Compost every dead plant in the current room.
-- :plants seed      -   Plant every seed in the current room.
-- :plants abort     -   Stop the active plant action.
+- :plants                   -   Treat every living plant in the current room.
+- :plants compost           -   Compost every dead plant in the current room.
+- :plants seed              -   Plant every seed in the current room.
+- :plants canreproduce on   -   Enable "Can Reproduce" for all plants in the current room.
+- :plants canreproduce off  -   Disable "Can Reproduce" for all plants in the current room.
+- :plants abort             -   Stop the active plant action.

@@ -7,6 +7,7 @@ import gearth.protocol.HPacket;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import extension.entity.HEntity_Plant_Stuff_Index_Enum;
 import extension.util.PlantUtils;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class RoomEntityState {
         extension.intercept(HMessage.Direction.TOSERVER, "GetGuestRoom", this::handleGetGuestRoom);
         extension.intercept(HMessage.Direction.TOSERVER, "Quit", this::handleQuit);
         extension.intercept(HMessage.Direction.TOSERVER, "RemovePetFromFlat", this::handleRemovePetFromFlat);
+        extension.intercept(HMessage.Direction.TOCLIENT, "PetStatusUpdate", this::handlePetStatusUpdate);
     }
 
     public void addEntity(HEntity entity) {
@@ -74,6 +76,40 @@ public class RoomEntityState {
 
     public void clearEntities() {
         entities.clear();
+    }
+
+    /**
+     * Updates the canReproduce flag on the in-memory HEntity for the given pet id.
+     * Called after receiving PetStatusUpdate confirmation that the toggle was applied server-side.
+     */
+    public void updateCanReproduce(int petId, boolean canReproduce) {
+        HEntity entity = entities.get(petId);
+        if (entity == null) {
+            log.warn("[RoomEntityState] updateCanReproduce: entity {} not in memory", petId);
+            return;
+        }
+        int index = HEntity_Plant_Stuff_Index_Enum.CAN_REPRODUCE.getIndex();
+        boolean updated = PlantUtils.updateIndexPlantEntity(entity, index, canReproduce);
+        if (updated) {
+            log.debug("[RoomEntityState] Updated canReproduce={} for entity {}", canReproduce, petId);
+        } else {
+            log.error("[RoomEntityState] updateCanReproduce: failed to update entity {}", petId);
+        }
+    }
+
+    private void handlePetStatusUpdate(HMessage hMessage) {
+        HPacket packet = hMessage.getPacket();
+        try {
+            packet.resetReadIndex();
+            packet.readInteger();
+            int petId = packet.readInteger();
+            packet.readBoolean();
+            packet.readString();
+            boolean canReproduce = packet.readBoolean();
+            updateCanReproduce(petId, canReproduce);
+        } catch (Exception e) {
+            log.debug("[RoomEntityState] Failed to parse PetStatusUpdate packet", e);
+        }
     }
 
     private void handleUsers(HMessage hMessage) {

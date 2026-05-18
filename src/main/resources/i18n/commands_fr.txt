@@ -1,6 +1,8 @@
 Commandes disponibles :
 
-- :plants           -   Soigne toutes les plantes vivantes dans la pièce actuelle.
-- :plants compost   -   Composte toutes les plantes mortes dans la pièce actuelle.
-- :plants seed      -   Plante toutes graines dans la pièce actuelle.
-- :plants abort     -   Arrête l'action en cours.
+- :plants                   -   Soigne toutes les plantes vivantes dans la pièce actuelle.
+- :plants compost           -   Composte toutes les plantes mortes dans la pièce actuelle.
+- :plants seed              -   Plante toutes graines dans la pièce actuelle.
+- :plants canreproduce on   -   Active "Peut se reproduire" pour toutes les plantes de la pièce actuelle.
+- :plants canreproduce off  -   Désactive "Peut se reproduire" pour toutes les plantes de la pièce actuelle.
+- :plants abort             -   Arrête l'action en cours.

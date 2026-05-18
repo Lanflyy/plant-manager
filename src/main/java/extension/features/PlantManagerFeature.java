@@ -26,6 +26,8 @@ public final class PlantManagerFeature {
     public static final String COMPOST_COMMAND = ":plants compost";
     public static final String SEED_COMMAND = ":plants seed";
     public static final String ABORT_COMMAND = ":plants abort";
+    public static final String CAN_REPRODUCE_ON_COMMAND = ":plants canreproduce on";
+    public static final String CAN_REPRODUCE_OFF_COMMAND = ":plants canreproduce off";
     public static final int PROCESS_DELAY_MS = 600;
 
     @Getter
@@ -50,6 +52,7 @@ public final class PlantManagerFeature {
         this.processor = new BulkItemProcessor(this, extension);
 
         extension.intercept(HMessage.Direction.TOCLIENT, "PetInfo", TreatPlantsAction::handlePetInfo);
+        extension.intercept(HMessage.Direction.TOCLIENT, "PetStatusUpdate", CanReproducePlantsAction::handlePetStatusUpdate);
         extension.intercept(HMessage.Direction.TOSERVER, "Chat", this::handleChat);
         extension.intercept(HMessage.Direction.TOSERVER, "GetGuestRoom", this::handleGetGuestRoom);
         extension.intercept(HMessage.Direction.TOSERVER, "Quit", this::handleQuit);
@@ -141,6 +144,10 @@ public final class PlantManagerFeature {
             action = new SeedPlantsAction(this, processor);
         } else if (PlantManagerFeature.ABORT_COMMAND.equals(text)) {
             action = new AbortPlantsAction(this, processor);
+        } else if (PlantManagerFeature.CAN_REPRODUCE_ON_COMMAND.equals(text)) {
+            action = new CanReproducePlantsAction(this, processor, true);
+        } else if (PlantManagerFeature.CAN_REPRODUCE_OFF_COMMAND.equals(text)) {
+            action = new CanReproducePlantsAction(this, processor, false);
         } else {
             log.error("[Chat] Unrecognized command: {}", text);
         }
@@ -151,7 +158,8 @@ public final class PlantManagerFeature {
     }
 
     private boolean isCommand(String text) {
-        return TREAT_COMMAND.equals(text) || COMPOST_COMMAND.equals(text) || SEED_COMMAND.equals(text) || ABORT_COMMAND.equals(text);
+        return TREAT_COMMAND.equals(text) || COMPOST_COMMAND.equals(text) || SEED_COMMAND.equals(text)
+                || ABORT_COMMAND.equals(text) || CAN_REPRODUCE_ON_COMMAND.equals(text) || CAN_REPRODUCE_OFF_COMMAND.equals(text);
     }
 
     public void handleGetGuestRoom(HMessage hMessage) {
