@@ -11,6 +11,10 @@ A Java G-Earth extension for treating and composting monster plants in the curre
 * `:plants canreproduce off` - Disable can reproduce on all your plants
 * `:plants autobreed on` - Enable auto-accept breeding from trusted users
 * `:plants autobreed off` - Disable auto-accept breeding from trusted users
+* `:plants autobreed adduser NAME` - Add a trusted auto-breed user.
+* `:plants autobreed adduser` - Add a trusted auto-breed user by clicking them.
+* `:plants autobreed removeuser NAME` - Remove a trusted auto-breed user.
+* `:plants autobreed removeuser` - Remove a trusted auto-breed user by clicking them.
 * `:plants abort` - Abort plant processing
 
 ## Build
