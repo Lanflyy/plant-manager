@@ -9,6 +9,8 @@ A Java G-Earth extension for treating and composting monster plants in the curre
 * `:plants seed` - Plant seeds for all dead plants in the room
 * `:plants canreproduce on` - Enable can reproduce on all your plants
 * `:plants canreproduce off` - Disable can reproduce on all your plants
+* `:plants autobreed on` - Enable auto-accept breeding from trusted users
+* `:plants autobreed off` - Disable auto-accept breeding from trusted users
 * `:plants abort` - Abort plant processing
 
 ## Build

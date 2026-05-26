@@ -7,63 +7,211 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<TabPane maxHeight="Infinity" maxWidth="Infinity" prefHeight="430.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.Plants">
+<TabPane maxHeight="Infinity"
+         maxWidth="Infinity"
+         prefHeight="430.0"
+         prefWidth="750.0"
+         tabClosingPolicy="UNAVAILABLE"
+         xmlns="http://javafx.com/javafx/8.0.171"
+         xmlns:fx="http://javafx.com/fxml/1"
+         fx:controller="extension.Plants">
+
    <tabs>
+
       <Tab text="Home">
          <content>
-            <VBox maxHeight="Infinity" maxWidth="Infinity" spacing="10.0">
+            <VBox maxHeight="Infinity"
+                  maxWidth="Infinity"
+                  spacing="10.0">
+
                <padding>
-                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                  <Insets bottom="15.0"
+                          left="15.0"
+                          right="15.0"
+                          top="15.0" />
                </padding>
+
                <children>
-                  <TextArea fx:id="commandsArea" editable="false" maxHeight="Infinity" maxWidth="Infinity" prefHeight="350.0" wrapText="true" style="-fx-font-size: 12px; -fx-font-family: monospace;" VBox.vgrow="ALWAYS" />
+
+                  <TextArea fx:id="commandsArea"
+                            editable="false"
+                            maxHeight="Infinity"
+                            maxWidth="Infinity"
+                            prefHeight="350.0"
+                            wrapText="true"
+                            style="-fx-font-size: 12px; -fx-font-family: monospace;"
+                            VBox.vgrow="ALWAYS" />
+
                </children>
+
             </VBox>
          </content>
       </Tab>
+
       <Tab text="Logs">
          <content>
-            <VBox maxHeight="Infinity" maxWidth="Infinity" spacing="10.0">
+
+            <VBox maxHeight="Infinity"
+                  maxWidth="Infinity"
+                  spacing="10.0">
+
                <padding>
-                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                  <Insets bottom="15.0"
+                          left="15.0"
+                          right="15.0"
+                          top="15.0" />
                </padding>
+
                <children>
-                  <TextArea fx:id="logArea" editable="false" maxHeight="Infinity" maxWidth="Infinity" prefHeight="340.0" wrapText="true" style="-fx-font-size: 11px; -fx-font-family: monospace;" VBox.vgrow="ALWAYS" />
-                  <HBox spacing="10.0" maxWidth="Infinity" alignment="CENTER_LEFT">
+
+                  <TextArea fx:id="logArea"
+                            editable="false"
+                            maxHeight="Infinity"
+                            maxWidth="Infinity"
+                            prefHeight="340.0"
+                            wrapText="true"
+                            style="-fx-font-size: 11px; -fx-font-family: monospace;"
+                            VBox.vgrow="ALWAYS" />
+
+                  <HBox spacing="10.0"
+                         alignment="CENTER_LEFT">
+
                      <children>
-                     <Label text="Log level:" />
-                     <ComboBox fx:id="logLevelCombo" prefWidth="140.0" style="-fx-border-color:#000000; -fx-border-width:1; -fx-background-color:#ffffff; -fx-text-fill:#000000;" />
+
+                        <Label text="Log level:"
+                               style="-fx-padding: 2 0 2 0;" />
+
+                        <ComboBox fx:id="logLevelCombo"
+                                  prefWidth="140.0"
+                                  style="-fx-border-color:#000000; -fx-border-width:1; -fx-background-color:#ffffff; -fx-text-fill:#000000;" />
+
                         <Region HBox.hgrow="ALWAYS" />
-                        <Button text="Clear logs" onAction="#clearLogs" maxWidth="Infinity" />
+
+                        <Button text="Clear logs"
+                                onAction="#clearLogs" />
+
                      </children>
+
                   </HBox>
+
                </children>
+
             </VBox>
+
          </content>
       </Tab>
+
       <Tab text="Settings">
          <content>
-            <VBox maxHeight="Infinity" maxWidth="Infinity" spacing="10.0">
+
+            <VBox maxHeight="Infinity"
+                  maxWidth="Infinity"
+                  spacing="5.0">
+
                <padding>
-                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                  <Insets bottom="15.0"
+                          left="15.0"
+                          right="15.0"
+                          top="15.0" />
                </padding>
+
                <children>
-                  <Label text="Advanced options" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
-                  <Region prefHeight="4.0" />
-                  <HBox spacing="4.0" alignment="CENTER_LEFT">
+
+                  <!-- Advanced options -->
+                  <Label text="Advanced options"
+                         style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+
+                  <VBox spacing="1.0">
+
                      <children>
-                        <CheckBox fx:id="chkRequestPetInfo" selected="true" text="Request Plant info before treating plant" />
-                        <Button fx:id="btnPetInfoHelp" text="?" mnemonicParsing="false" style="-fx-background-color: transparent; -fx-text-fill: #2b7df6; -fx-font-weight: bold; -fx-border-color: transparent; -fx-cursor: hand; -fx-padding: 0;" prefWidth="22.0" prefHeight="22.0" />
+
+                        <HBox spacing="4.0"
+                               alignment="CENTER_LEFT">
+
+                           <children>
+
+                              <CheckBox fx:id="chkRequestPetInfo"
+                                        selected="true"
+                                        text="Request Plant info before treating plant"
+                                        style="-fx-padding: 0;" />
+
+                              <Button fx:id="btnPetInfoHelp"
+                                      text="(?)"
+                                      mnemonicParsing="false"
+                                      style="-fx-background-color: transparent; -fx-text-fill: #2b7df6; -fx-font-weight: bold; -fx-border-color: transparent; -fx-cursor: hand; -fx-padding: 0;" />
+
+                           </children>
+
+                        </HBox>
+
                      </children>
+
+                  </VBox>
+
+                  <Region prefHeight="2.0" />
+
+                  <!-- Auto-accept breeding -->
+                  <Label text="Auto-accept breeding"
+                         style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+
+                  <VBox spacing="1.0">
+
+                     <children>
+
+                        <CheckBox fx:id="chkAutoBreed"
+                                  text="Enable auto-accept breeding from trusted users"
+                                  style="-fx-padding: 0;" />
+
+                        <CheckBox fx:id="chkAutoBreedRequireSameOrHigherRarity"
+                                  text="Auto accept only if rarity level is same level or higher"
+                                  selected="true"
+                                  style="-fx-padding: 0;" />
+
+                     </children>
+
+                  </VBox>
+
+                  <HBox spacing="8.0"
+                         alignment="CENTER_LEFT">
+
+                     <children>
+
+                        <TextField fx:id="txtAutoBreedUsername"
+                                   promptText="Username"
+                                   HBox.hgrow="ALWAYS" />
+
+                        <Button fx:id="btnAutoBreedAdd"
+                                text="Add" />
+
+                        <Button fx:id="btnAutoBreedRemove"
+                                text="Remove checked" />
+
+                     </children>
+
                   </HBox>
+
+                  <Label text="Trusted users"
+                         style="-fx-font-weight: bold;" />
+
+                  <TableView fx:id="tblAutoBreedUsers"
+                             editable="true"
+                             prefHeight="150.0"
+                             VBox.vgrow="ALWAYS" />
+
                </children>
+
             </VBox>
+
          </content>
       </Tab>
+
    </tabs>
+
 </TabPane>

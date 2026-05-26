@@ -57,6 +57,23 @@ public class PlantUtils {
         return Boolean.TRUE.equals(stuff[index]);
     }
 
+    public static int getRarityLevel(HEntity entity) {
+        if (!isPlant(entity)) {
+            return -1;
+        }
+        int index = HEntity_Plant_Stuff_Index_Enum.RARITY_LEVEL.getIndex();
+        Object[] stuff = entity.getStuff();
+        if (stuff.length <= index) {
+            log.error("Checking rarity level, but stuff length is {}, expected at least {}", stuff.length, index + 1);
+            return -1;
+        }
+        Object rarityLevel = stuff[index];
+        if (!(rarityLevel instanceof Number)) {
+            log.error("Checking rarity level, but stuff[{}] is not a number: {}", index, rarityLevel);
+            return -1;
+        }
+        return ((Number) rarityLevel).intValue();
+    }
     public static boolean isDeadPlant(HEntity entity) {
     	if(!isPlant(entity)) {
     		log.error("Checking if dead plant, but it is not even a plant !");
@@ -71,3 +88,5 @@ public class PlantUtils {
         return Boolean.TRUE.equals(stuff[index]);
     }
 }
+
+

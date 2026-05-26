@@ -1,5 +1,6 @@
 package extension;
 
+import extension.entity.AutoBreedTrustedUser;
 import extension.features.PlantManagerFeature;
 import extension.ui.PlantsController;
 import gearth.extensions.ExtensionForm;
@@ -8,7 +9,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Button;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,12 +34,24 @@ public class Plants extends ExtensionForm {
     private CheckBox chkRequestPetInfo;
     @FXML
     private Button btnPetInfoHelp;
+    @FXML
+    private CheckBox chkAutoBreed;
+    @FXML
+    private CheckBox chkAutoBreedRequireSameOrHigherRarity;
+    @FXML
+    private TextField txtAutoBreedUsername;
+    @FXML
+    private Button btnAutoBreedAdd;
+    @FXML
+    private Button btnAutoBreedRemove;
+    @FXML
+    private TableView<AutoBreedTrustedUser> tblAutoBreedUsers;
 
     private PlantsController uiController;
     private PlantManagerFeature plantManagerFeature;
 
     public void initialize() {
-        uiController = new PlantsController(commandsArea, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp);
+        uiController = new PlantsController(commandsArea, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers);
         uiController.initialize();
     }
 

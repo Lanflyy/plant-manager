@@ -17,6 +17,7 @@ import extension.state.RoomEntityState;
 import extension.state.RoomObjectState;
 import extension.state.SessionState;
 import extension.util.NotificationUtils;
+import extension.util.PlantSettings;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,6 +29,10 @@ public final class PlantManagerFeature {
     public static final String ABORT_COMMAND = ":plants abort";
     public static final String CAN_REPRODUCE_ON_COMMAND = ":plants canreproduce on";
     public static final String CAN_REPRODUCE_OFF_COMMAND = ":plants canreproduce off";
+    public static final String AUTO_BREED_ON_COMMAND = ":plants autobreed on";
+    public static final String AUTO_BREED_OFF_COMMAND = ":plants autobreed off";
+    public static final String AUTO_BREED_ADD_USER_COMMAND = ":plants autobreed adduser";
+    public static final String AUTO_BREED_REMOVE_USER_COMMAND = ":plants autobreed removeuser";
     public static final int PROCESS_DELAY_MS = 600;
 
     @Getter
@@ -41,6 +46,7 @@ public final class PlantManagerFeature {
     private SessionState sessionState;
 
     private BulkItemProcessor processor;
+    private AutoBreedFeature autoBreedFeature;
 
     public void install() {
         // initialize states
@@ -50,6 +56,8 @@ public final class PlantManagerFeature {
 
         // initialize processor and handlers
         this.processor = new BulkItemProcessor(this, extension);
+        this.autoBreedFeature = new AutoBreedFeature(this);
+        this.autoBreedFeature.install();
 
         extension.intercept(HMessage.Direction.TOCLIENT, "PetInfo", TreatPlantsAction::handlePetInfo);
         extension.intercept(HMessage.Direction.TOCLIENT, "PetStatusUpdate", CanReproducePlantsAction::handlePetStatusUpdate);
@@ -71,6 +79,7 @@ public final class PlantManagerFeature {
         abortProcessingSafe();
         if (roomEntityState != null) roomEntityState.setInitialized(false);
         if (sessionState != null) sessionState.setCurrentRoomId(-1);
+        if (autoBreedFeature != null) autoBreedFeature.reset();
         log.info("[Plants] Extension reset, clearing everything..");
     }
 
@@ -129,6 +138,15 @@ public final class PlantManagerFeature {
         hMessage.setBlocked(true);
         log.debug("[Chat] Command received: {}", text);
 
+        if (isAutoBreedCommand(text)) {
+            handleAutoBreedCommand(text);
+            return;
+        }
+
+        if (PlantManagerFeature.ABORT_COMMAND.equals(text) && autoBreedFeature != null) {
+            autoBreedFeature.stopClickUser(true);
+        }
+
         if (!isInitialized()) {
             NotificationUtils.showSystemNotificationToUser(getExtension(), "Error: Room not initialized yet! Please wait for the room to load or reload it.");
             log.debug("[Chat] Command rejected because the room is not initialized");
@@ -159,7 +177,51 @@ public final class PlantManagerFeature {
 
     private boolean isCommand(String text) {
         return TREAT_COMMAND.equals(text) || COMPOST_COMMAND.equals(text) || SEED_COMMAND.equals(text)
-                || ABORT_COMMAND.equals(text) || CAN_REPRODUCE_ON_COMMAND.equals(text) || CAN_REPRODUCE_OFF_COMMAND.equals(text);
+                || ABORT_COMMAND.equals(text) || CAN_REPRODUCE_ON_COMMAND.equals(text) || CAN_REPRODUCE_OFF_COMMAND.equals(text)
+                || isAutoBreedCommand(text);
+    }
+
+    private boolean isAutoBreedCommand(String text) {
+        return AUTO_BREED_ON_COMMAND.equals(text) || AUTO_BREED_OFF_COMMAND.equals(text)
+                || AUTO_BREED_ADD_USER_COMMAND.equals(text) || AUTO_BREED_REMOVE_USER_COMMAND.equals(text)
+                || text.startsWith(AUTO_BREED_ADD_USER_COMMAND + " ") || text.startsWith(AUTO_BREED_REMOVE_USER_COMMAND + " ");
+    }
+
+    private void handleAutoBreedCommand(String text) {
+        if (AUTO_BREED_ON_COMMAND.equals(text) || AUTO_BREED_OFF_COMMAND.equals(text)) {
+            boolean enabled = AUTO_BREED_ON_COMMAND.equals(text);
+            PlantSettings.setAutoBreedEnabled(enabled);
+            int trustedUserCount = PlantSettings.getAutoBreedTrustedUsernames().size();
+            NotificationUtils.showSystemNotificationToUser(getExtension(), "Auto-accept breeding has been turned " + (enabled ? "on" : "off") + " (" + trustedUserCount + " trusted users).");
+            log.info("[AutoBreed] Auto-accept breeding turned {} with {} trusted users", enabled ? "on" : "off", trustedUserCount);
+            return;
+        }
+
+        if (AUTO_BREED_ADD_USER_COMMAND.equals(text)) {
+            autoBreedFeature.beginClickAddUser();
+            return;
+        }
+        if (AUTO_BREED_REMOVE_USER_COMMAND.equals(text)) {
+            autoBreedFeature.beginClickRemoveUser();
+            return;
+        }
+        if (text.startsWith(AUTO_BREED_ADD_USER_COMMAND + " ")) {
+            String username = text.substring((AUTO_BREED_ADD_USER_COMMAND + " ").length()).trim();
+            if (username.isEmpty()) {
+                autoBreedFeature.beginClickAddUser();
+            } else {
+                autoBreedFeature.addTrustedUsername(username);
+            }
+            return;
+        }
+        if (text.startsWith(AUTO_BREED_REMOVE_USER_COMMAND + " ")) {
+            String username = text.substring((AUTO_BREED_REMOVE_USER_COMMAND + " ").length()).trim();
+            if (username.isEmpty()) {
+                autoBreedFeature.beginClickRemoveUser();
+            } else {
+                autoBreedFeature.removeTrustedUsername(username);
+            }
+        }
     }
 
     public void handleGetGuestRoom(HMessage hMessage) {

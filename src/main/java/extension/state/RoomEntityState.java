@@ -1,5 +1,15 @@
 package extension.state;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import extension.entity.HEntity_Plant_Stuff_Index_Enum;
+import extension.util.PlantSettings;
+import extension.util.PlantUtils;
 import gearth.extensions.ExtensionForm;
 import gearth.extensions.parsers.HEntity;
 import gearth.protocol.HMessage;
@@ -7,15 +17,6 @@ import gearth.protocol.HPacket;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import extension.entity.HEntity_Plant_Stuff_Index_Enum;
-import extension.util.PlantUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class RoomEntityState {
@@ -38,10 +39,15 @@ public class RoomEntityState {
     public void addEntity(HEntity entity) {
         if (entity == null) return;
         entities.put(entity.getId(), entity);
+        PlantSettings.resolveAutoBreedTrustedUserEntity(entity);
     }
 
     public HEntity removeEntityById(int id) {
         return entities.remove(id);
+    }
+
+    public HEntity getEntityById(int id) {
+        return entities.get(id);
     }
 
     public List<HEntity> findEntitiesByIndex(int index) {
