@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @ExtensionInfo(
         Title = "Plants",
         Description = "Automate treating and composting monster plants",
-        Version = "1.3.0",
+        Version = "1.4.0",
         Author = "Lanflyy"
 )
 public class Plants extends ExtensionForm {
@@ -103,6 +103,7 @@ public class Plants extends ExtensionForm {
 
     @Override
     public void handleLanguageChange(String locale) {
+        log.debug("[Language] Changed to: {}", locale);
         if (uiController != null) {
             uiController.setLanguage(locale);
         }
