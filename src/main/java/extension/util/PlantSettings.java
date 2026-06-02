@@ -1,9 +1,9 @@
 package extension.util;
 
 import extension.entity.AutoBreedTrustedUser;
+import gearth.app.misc.Cacher;
 import gearth.extensions.parsers.HEntity;
 import gearth.extensions.parsers.HEntityType;
-import gearth.misc.Cacher;
 
 import java.util.ArrayList;
 import java.util.Collection;

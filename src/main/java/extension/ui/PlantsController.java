@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import extension.util.PlantSettings;
-import gearth.misc.Cacher;
+import gearth.app.misc.Cacher;
 
 import org.slf4j.LoggerFactory;
 
@@ -361,6 +361,10 @@ public class PlantsController {
 
     public void clearLogs() {
         view.clearLogs();
+    }
+
+    public void setLanguage(String lang) {
+        view.setLanguage(lang);
     }
 }
 

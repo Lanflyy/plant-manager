@@ -65,7 +65,7 @@ public class Plants extends ExtensionForm {
     private boolean isAlreadyConnected = false;
 
     @Override
-    protected void initExtension() {
+    public void initExtension() {
         // If the PacketInfoManager has data during initExtension, it means the extension
         // was attached while G-Earth was already connected to the game client.
         isAlreadyConnected = getPacketInfoManager() != null && !getPacketInfoManager().getPacketInfoList().isEmpty();
@@ -82,7 +82,7 @@ public class Plants extends ExtensionForm {
     }
 
     @Override
-    protected void onStartConnection() {
+    public void onStartConnection() {
         log.debug("[Connection] Started");
         
         // Only request info manually if the extension was attached mid-session.
@@ -94,10 +94,17 @@ public class Plants extends ExtensionForm {
     }
 
     @Override
-    protected void onEndConnection() {
+    public void onEndConnection() {
         if (plantManagerFeature != null) {
             plantManagerFeature.reset();
         }
         log.debug("[Connection] Ended");
+    }
+
+    @Override
+    public void handleLanguageChange(String locale) {
+        if (uiController != null) {
+            uiController.setLanguage(locale);
+        }
     }
 }
