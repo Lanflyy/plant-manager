@@ -41,6 +41,7 @@ public class PlantsController {
     private final CheckBox chkRequestPetInfo;
     private final Button btnPetInfoHelp;
     private final CheckBox chkAutoBreed;
+    private final ComboBox<String> cmbAutoBreedAcceptMode;
     private final CheckBox chkAutoBreedRequireSameOrHigherRarity;
     private final TextField txtAutoBreedUsername;
     private final Button btnAutoBreedAdd;
@@ -59,6 +60,7 @@ public class PlantsController {
         CheckBox chkRequestPetInfo,
         Button btnPetInfoHelp,
         CheckBox chkAutoBreed,
+        ComboBox<String> cmbAutoBreedAcceptMode,
         CheckBox chkAutoBreedRequireSameOrHigherRarity,
         TextField txtAutoBreedUsername,
         Button btnAutoBreedAdd,
@@ -69,6 +71,7 @@ public class PlantsController {
         this.chkRequestPetInfo = chkRequestPetInfo;
         this.btnPetInfoHelp = btnPetInfoHelp;
         this.chkAutoBreed = chkAutoBreed;
+        this.cmbAutoBreedAcceptMode = cmbAutoBreedAcceptMode;
         this.chkAutoBreedRequireSameOrHigherRarity = chkAutoBreedRequireSameOrHigherRarity;
         this.txtAutoBreedUsername = txtAutoBreedUsername;
         this.btnAutoBreedAdd = btnAutoBreedAdd;
@@ -123,11 +126,26 @@ public class PlantsController {
         }
         return existingStyle.endsWith(";") ? existingStyle + " " + styleToAppend : existingStyle + "; " + styleToAppend;
     }
+    private static final String AUTO_BREED_ACCEPT_MODE_TRUSTED_USERS = "Trusted Users only";
+    private static final String AUTO_BREED_ACCEPT_MODE_ANY_USER = "Any user";
+
     private void initAutoBreedControls() {
         try {
             initAutoBreedTable();
             if (chkAutoBreed != null) {
-                chkAutoBreed.setOnAction(e -> PlantSettings.setAutoBreedEnabled(chkAutoBreed.isSelected()));
+                chkAutoBreed.setOnAction(e -> {
+                    PlantSettings.setAutoBreedEnabled(chkAutoBreed.isSelected());
+                    updateAutoBreedAcceptModeEnabled();
+                });
+            }
+            if (cmbAutoBreedAcceptMode != null) {
+                cmbAutoBreedAcceptMode.setItems(FXCollections.observableArrayList(AUTO_BREED_ACCEPT_MODE_TRUSTED_USERS, AUTO_BREED_ACCEPT_MODE_ANY_USER));
+                cmbAutoBreedAcceptMode.setOnAction(e -> {
+                    String value = cmbAutoBreedAcceptMode.getValue();
+                    if (value != null) {
+                        PlantSettings.setAutoBreedAcceptAllUsers(AUTO_BREED_ACCEPT_MODE_ANY_USER.equals(value));
+                    }
+                });
             }
             if (chkAutoBreedRequireSameOrHigherRarity != null) {
                 chkAutoBreedRequireSameOrHigherRarity.setOnAction(e -> PlantSettings.setAutoBreedRequireSameOrHigherRarity(chkAutoBreedRequireSameOrHigherRarity.isSelected()));
@@ -247,15 +265,26 @@ public class PlantsController {
             if (chkAutoBreed != null) {
                 chkAutoBreed.setSelected(PlantSettings.isAutoBreedEnabled());
             }
+            if (cmbAutoBreedAcceptMode != null) {
+                boolean acceptAllUsers = PlantSettings.isAutoBreedAcceptAllUsers();
+                cmbAutoBreedAcceptMode.getSelectionModel().select(acceptAllUsers ? AUTO_BREED_ACCEPT_MODE_ANY_USER : AUTO_BREED_ACCEPT_MODE_TRUSTED_USERS);
+            }
             if (chkAutoBreedRequireSameOrHigherRarity != null) {
                 chkAutoBreedRequireSameOrHigherRarity.setSelected(PlantSettings.isAutoBreedRequireSameOrHigherRarity());
             }
             autoBreedUsers.setAll(PlantSettings.getAutoBreedTrustedUsers());
+            updateAutoBreedAcceptModeEnabled();
         };
         if (Platform.isFxApplicationThread()) {
             refresh.run();
         } else {
             Platform.runLater(refresh);
+        }
+    }
+
+    private void updateAutoBreedAcceptModeEnabled() {
+        if (cmbAutoBreedAcceptMode != null && chkAutoBreed != null) {
+            cmbAutoBreedAcceptMode.setDisable(!chkAutoBreed.isSelected());
         }
     }
 

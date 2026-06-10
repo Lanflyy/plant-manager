@@ -161,22 +161,36 @@
                   <Label text="Auto-accept breeding"
                          style="-fx-font-size: 14px; -fx-font-weight: bold;" />
 
-                  <VBox spacing="1.0">
+                   <VBox spacing="1.0">
 
-                     <children>
+                      <children>
 
-                        <CheckBox fx:id="chkAutoBreed"
-                                  text="Enable auto-accept breeding from trusted users"
-                                  style="-fx-padding: 0;" />
+                         <HBox spacing="8.0"
+                                alignment="CENTER_LEFT">
 
-                        <CheckBox fx:id="chkAutoBreedRequireSameOrHigherRarity"
-                                  text="Auto accept only if rarity level is same level or higher"
-                                  selected="true"
-                                  style="-fx-padding: 0;" />
+                            <children>
 
-                     </children>
+                               <CheckBox fx:id="chkAutoBreed"
+                                         text="Enable auto-accept breeding from"
+                                         style="-fx-padding: 0;" />
 
-                  </VBox>
+                               <ComboBox fx:id="cmbAutoBreedAcceptMode"
+                                         prefWidth="160.0"
+                                         prefHeight="25.0"
+                                         style="-fx-border-color:#000000; -fx-border-width:1; -fx-background-color:#ffffff; -fx-text-fill:#000000;" />
+
+                            </children>
+
+                         </HBox>
+
+                         <CheckBox fx:id="chkAutoBreedRequireSameOrHigherRarity"
+                                   text="Auto accept only if rarity level is same level or higher"
+                                   selected="true"
+                                   style="-fx-padding: 0;" />
+
+                      </children>
+
+                   </VBox>
 
                   <HBox spacing="8.0"
                          alignment="CENTER_LEFT">

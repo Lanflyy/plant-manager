@@ -21,9 +21,11 @@ public final class PlantSettings {
 
     private static volatile boolean REQUEST_PET_INFO_BEFORE_TREAT = true;
     private static final String AUTO_BREED_ENABLED_CACHE_KEY = "plants.autoBreedEnabled";
+    private static final String AUTO_BREED_ACCEPT_ALL_USERS_CACHE_KEY = "plants.autoBreedAcceptAllUsers";
     private static final String AUTO_BREED_TRUSTED_USERS_CACHE_KEY = "plants.autoBreedTrustedUsers";
     private static final String AUTO_BREED_REQUIRE_SAME_OR_HIGHER_RARITY_CACHE_KEY = "plants.autoBreedRequireSameOrHigherRarity";
     private static volatile boolean AUTO_BREED_ENABLED = false;
+    private static volatile boolean AUTO_BREED_ACCEPT_ALL_USERS = false;
     private static volatile boolean AUTO_BREED_REQUIRE_SAME_OR_HIGHER_RARITY = true;
     private static volatile boolean AUTO_BREED_LOADED = false;
     private static final Set<String> AUTO_BREED_TRUSTED_USERS = new LinkedHashSet<>();
@@ -47,6 +49,18 @@ public final class PlantSettings {
         ensureAutoBreedLoaded();
         AUTO_BREED_ENABLED = v;
         Cacher.put(AUTO_BREED_ENABLED_CACHE_KEY, v);
+        notifyAutoBreedListeners();
+    }
+
+    public static boolean isAutoBreedAcceptAllUsers() {
+        ensureAutoBreedLoaded();
+        return AUTO_BREED_ACCEPT_ALL_USERS;
+    }
+
+    public static void setAutoBreedAcceptAllUsers(boolean v) {
+        ensureAutoBreedLoaded();
+        AUTO_BREED_ACCEPT_ALL_USERS = v;
+        Cacher.put(AUTO_BREED_ACCEPT_ALL_USERS_CACHE_KEY, v);
         notifyAutoBreedListeners();
     }
 
@@ -212,6 +226,11 @@ public final class PlantSettings {
                 Object enabled = Cacher.get(AUTO_BREED_ENABLED_CACHE_KEY);
                 if (enabled instanceof Boolean) {
                     AUTO_BREED_ENABLED = (Boolean) enabled;
+                }
+
+                Object acceptAllUsers = Cacher.get(AUTO_BREED_ACCEPT_ALL_USERS_CACHE_KEY);
+                if (acceptAllUsers instanceof Boolean) {
+                    AUTO_BREED_ACCEPT_ALL_USERS = (Boolean) acceptAllUsers;
                 }
 
                 Object requireRarity = Cacher.get(AUTO_BREED_REQUIRE_SAME_OR_HIGHER_RARITY_CACHE_KEY);

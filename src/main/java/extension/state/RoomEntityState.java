@@ -12,6 +12,7 @@ import extension.util.PlantSettings;
 import extension.util.PlantUtils;
 import gearth.extensions.ExtensionForm;
 import gearth.extensions.parsers.HEntity;
+import gearth.extensions.parsers.HEntityType;
 import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import lombok.Getter;
@@ -48,6 +49,13 @@ public class RoomEntityState {
 
     public HEntity getEntityById(int id) {
         return entities.get(id);
+    }
+
+    public List<HEntity> findEntitiesByTypeIndex(HEntityType entityType,int index) {
+        return entities.values()
+                .stream()
+                .filter(entity -> entity.getIndex() == index && entity.getEntityType() == entityType)
+                .collect(Collectors.toList());
     }
 
     public List<HEntity> findEntitiesByIndex(int index) {

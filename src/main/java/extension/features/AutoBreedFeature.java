@@ -117,10 +117,14 @@ public final class AutoBreedFeature {
             int myPlantId = packet.readInteger();
             int senderPlantId = packet.readInteger();
 
+            boolean acceptAllUsers = PlantSettings.isAutoBreedAcceptAllUsers();
             String senderPlantOwnerUsername = findSenderPlantOwnerUsername(senderPlantId, requesterEntityIndex);
-            if (senderPlantOwnerUsername == null || !PlantSettings.containsAutoBreedTrustedUsername(senderPlantOwnerUsername)) {
-                log.debug("[AutoBreed] Breeding request ignored. requesterEntityIndex={}, myPlantId={}, senderPlantId={}, senderPlantOwnerUsername={}", requesterEntityIndex, myPlantId, senderPlantId, senderPlantOwnerUsername);
-                return;
+
+            if (!acceptAllUsers) {
+                if (senderPlantOwnerUsername == null || !PlantSettings.containsAutoBreedTrustedUsername(senderPlantOwnerUsername)) {
+                    log.debug("[AutoBreed] Breeding request ignored. requesterEntityIndex={}, myPlantId={}, senderPlantId={}, senderPlantOwnerUsername={}", requesterEntityIndex, myPlantId, senderPlantId, senderPlantOwnerUsername);
+                    return;
+                }
             }
 
             if (!canAutoAcceptByRarity(myPlantId, senderPlantId, senderPlantOwnerUsername)) {
@@ -129,7 +133,7 @@ public final class AutoBreedFeature {
 
             hMessage.setBlocked(true);
             scheduler.schedule(() -> acceptBreeding(myPlantId, senderPlantId, senderPlantOwnerUsername), AUTO_BREED_DELAY_MS, TimeUnit.MILLISECONDS);
-            log.debug("[AutoBreed] Breeding request queued for trusted user {}. myPlantId={}, senderPlantId={}", senderPlantOwnerUsername, myPlantId, senderPlantId);
+            log.debug("[AutoBreed] Breeding request queued. myPlantId={}, senderPlantId={}, senderPlantOwnerUsername={}, acceptAll={}", myPlantId, senderPlantId, senderPlantOwnerUsername, acceptAllUsers);
         } catch (Exception e) {
             log.debug("[AutoBreed] Failed to parse PetBreeding packet", e);
         }
@@ -193,8 +197,13 @@ public final class AutoBreedFeature {
 
     private void acceptBreeding(int myPlantId, int senderPlantId, String senderPlantOwnerUsername) {
         try {
-            if (!PlantSettings.isAutoBreedEnabled() || !PlantSettings.containsAutoBreedTrustedUsername(senderPlantOwnerUsername)) {
-                log.debug("[AutoBreed] Queued breeding accept skipped because settings changed. myPlantId={}, senderPlantId={}", myPlantId, senderPlantId);
+            if (!PlantSettings.isAutoBreedEnabled()) {
+                log.debug("[AutoBreed] Queued breeding accept skipped because auto-breed is disabled. myPlantId={}, senderPlantId={}", myPlantId, senderPlantId);
+                return;
+            }
+            boolean acceptAllUsers = PlantSettings.isAutoBreedAcceptAllUsers();
+            if (!acceptAllUsers && !PlantSettings.containsAutoBreedTrustedUsername(senderPlantOwnerUsername)) {
+                log.debug("[AutoBreed] Queued breeding accept skipped because user is not trusted. myPlantId={}, senderPlantId={}", myPlantId, senderPlantId);
                 return;
             }
             boolean sent = manager.getExtension().sendToServer(new HPacket("BreedPets", HMessage.Direction.TOSERVER, BREED_PETS_COUNT, myPlantId, senderPlantId));
@@ -225,13 +234,8 @@ public final class AutoBreedFeature {
         if (roomEntityState == null) {
             return null;
         }
-        List<HEntity> entities = roomEntityState.findEntitiesByIndex(entityIndex);
-        for (HEntity entity : entities) {
-            if (entity.getEntityType() == HEntityType.HABBO) {
-                return entity;
-            }
-        }
-        return null;
+        List<HEntity> entities = roomEntityState.findEntitiesByTypeIndex(HEntityType.HABBO, entityIndex);
+        return entities.isEmpty() ? null : entities.get(0);
     }
 
     private HEntity findCurrentHabboEntityByUsername(String username) {

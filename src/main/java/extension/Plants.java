@@ -6,20 +6,19 @@ import extension.ui.PlantsController;
 import gearth.extensions.ExtensionForm;
 import gearth.extensions.ExtensionInfo;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ExtensionInfo(
         Title = "Plants",
         Description = "Automate treating and composting monster plants",
-        Version = "1.3.0",
+        Version = "1.3.1",
         Author = "Lanflyy"
 )
 public class Plants extends ExtensionForm {
@@ -37,6 +36,8 @@ public class Plants extends ExtensionForm {
     @FXML
     private CheckBox chkAutoBreed;
     @FXML
+    private ComboBox<String> cmbAutoBreedAcceptMode;
+    @FXML
     private CheckBox chkAutoBreedRequireSameOrHigherRarity;
     @FXML
     private TextField txtAutoBreedUsername;
@@ -51,7 +52,7 @@ public class Plants extends ExtensionForm {
     private PlantManagerFeature plantManagerFeature;
 
     public void initialize() {
-        uiController = new PlantsController(commandsArea, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers);
+        uiController = new PlantsController(commandsArea, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers);
         uiController.initialize();
     }
 
