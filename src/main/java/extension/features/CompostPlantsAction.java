@@ -1,5 +1,7 @@
 package extension.features;
 
+import java.util.List;
+
 import extension.entity.ACTION_COMMAND_TYPE;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
@@ -18,9 +20,11 @@ public class CompostPlantsAction implements UserActionExecutor, ItemProcessingHa
 
     @Override
     public void execute() {
-        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Composting plants started... (Found " + manager.getPlantCount() + " plants)");
-        log.debug("[Plants] Compost command started. Plants in memory: {}", manager.getPlantCount());
-        processor.startProcessing(this, manager.getPlantsSnapshot());
+        List<HEntity> plants = manager.getPlantsSnapshot();
+        long deadCount = plants.stream().filter(PlantUtils::isDeadPlant).count();
+        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Composting plants started... (Found " + deadCount + " dead plants)");
+        log.debug("[Plants] Compost command started. Dead plants: {}, Total plants: {}", deadCount, manager.getPlantCount());
+        processor.startProcessing(this, plants);
     }
 
     @Override
