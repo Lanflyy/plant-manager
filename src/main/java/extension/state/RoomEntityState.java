@@ -93,6 +93,24 @@ public class RoomEntityState {
     }
 
     /**
+     * Updates the canBreed flag on the in-memory HEntity for the given pet id.
+     */
+    public void updateCanBreed(int petId, boolean canBreed) {
+        HEntity entity = entities.get(petId);
+        if (entity == null) {
+            log.warn("[RoomEntityState] updateCanBreed: entity {} not in memory", petId);
+            return;
+        }
+        int index = HEntity_Plant_Stuff_Index_Enum.CAN_BREED.getIndex();
+        boolean updated = PlantUtils.updateIndexPlantEntity(entity, index, canBreed);
+        if (updated) {
+            log.debug("[RoomEntityState] Updated canBreed={} for entity {}", canBreed, petId);
+        } else {
+            log.error("[RoomEntityState] updateCanBreed: failed to update entity {}", petId);
+        }
+    }
+
+    /**
      * Updates the canReproduce flag on the in-memory HEntity for the given pet id.
      * Called after receiving PetStatusUpdate confirmation that the toggle was applied server-side.
      */
@@ -111,15 +129,23 @@ public class RoomEntityState {
         }
     }
 
+    /**
+     * Packet structure: {@code {i:index}{i:petId}{b:canBreed}{b:false}{b:false}{b:canReproduce}}
+     * The 4 booleans after petId are: canBreed, always-false, always-false, canReproduce.
+     * An empty string ({@code 00 00}) has identical bytes to two false booleans,
+     * which is why the old boolean+string+boolean parse happened to work.
+     */
     private void handlePetStatusUpdate(HMessage hMessage) {
         HPacket packet = hMessage.getPacket();
         try {
             packet.resetReadIndex();
-            packet.readInteger();
+            packet.readInteger(); // index (ignored)
             int petId = packet.readInteger();
-            packet.readBoolean();
-            packet.readString();
+            boolean canBreed = packet.readBoolean();
+            packet.readBoolean(); // always false
+            packet.readBoolean(); // always false
             boolean canReproduce = packet.readBoolean();
+            updateCanBreed(petId, canBreed);
             updateCanReproduce(petId, canReproduce);
         } catch (Exception e) {
             log.debug("[RoomEntityState] Failed to parse PetStatusUpdate packet", e);

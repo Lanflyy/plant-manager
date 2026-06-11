@@ -21,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Handles the `:plants canreproduce on` and `:plants canreproduce off` commands.
  *
- * The server sends a {@code PetStatusUpdate} packet when the canReproduce flag changes.
- * Packet structure: {@code {i:index}{i:petId}{b:?}{s:""}{b:canReproduceState}}
+ * The server sends a {@code PetStatusUpdate} packet when a pet's breeding state changes.
+ * Packet structure: {@code {i:index}{i:petId}{b:canBreed}{b:false}{b:false}{b:canReproduce}}
  * The last boolean is the new canReproduce state.
  * We wait for that confirmation before moving to the next plant.
  */
@@ -106,16 +106,19 @@ public class CanReproducePlantsAction implements UserActionExecutor, ItemProcess
      * Registered as a dedicated {@code PetStatusUpdate} listener in {@link PlantManagerFeature}.
      * Resets the read index independently because multiple listeners share the same packet.
      *
-     * Packet structure: {@code {i:index}{i:petId}{b:?}{s:""}{b:canReproduceState}}
+     * Packet structure: {@code {i:index}{i:petId}{b:canBreed}{b:false}{b:false}{b:canReproduce}}
+     * The 4 booleans after petId are: canBreed, always-false, always-false, canReproduce.
+     * We only care about the last boolean (canReproduce) to complete the pending future.
      */
     public static void handlePetStatusUpdate(HMessage hMessage) {
         HPacket packet = hMessage.getPacket();
         try {
             packet.resetReadIndex();
-            packet.readInteger(); // ignored
+            packet.readInteger(); // index (ignored)
             int petId = packet.readInteger();
-            packet.readBoolean(); // unknown boolean
-            packet.readString();  // unknown string (empty)
+            packet.readBoolean(); // canBreed (ignored here, handled by RoomEntityState)
+            packet.readBoolean(); // always false
+            packet.readBoolean(); // always false
             boolean canReproduceState = packet.readBoolean();
 
             CompletableFuture<Boolean> future = petStatusRequests.remove(petId);
