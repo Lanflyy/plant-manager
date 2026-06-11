@@ -5,6 +5,23 @@ All notable changes to the Plant Manager extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-06-11
+
+### Added
+- Feature : Add command to count the number of plants that can breed
+- Feature : Add accept auto-breed from any user option
+
+### Changed
+- Make message "start can reproduction switch on/off" notification more clear for the user
+- Move getOwnerId in PlantUtils
+
+### Fixed
+- Bugfix: Update in-memory "can breed" status after PetStatusUpdate packet received
+- Bugfix: Can reproduce switch on/off applied now only to plants that can actually breed
+- Bugfix: Compost command processes now only owned plants
+- Bugfix: Too long wait when trying to compost plants inside a room full of alive plants
+- Bugfix: Make message more informative about plants to be composted
+
 ## [1.3.0] - 2026-05-26
 
 ### Added
@@ -54,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dynamic logging level
 - Basic plant management features
 
+[1.3.1]: https://github.com/Lanflyy/plant-manager/compare/1.3.0...1.3.1
 [1.3.0]: https://github.com/Lanflyy/plant-manager/compare/1.2.0...1.3.0
 [1.2.0]: https://github.com/Lanflyy/plant-manager/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/Lanflyy/plant-manager/compare/1.0.0...1.1.0
