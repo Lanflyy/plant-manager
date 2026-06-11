@@ -1,5 +1,12 @@
 package extension.features;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import extension.entity.ACTION_COMMAND_TYPE;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
@@ -10,13 +17,6 @@ import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Handles the `:plants canreproduce on` and `:plants canreproduce off` commands.
@@ -39,15 +39,16 @@ public class CanReproducePlantsAction implements UserActionExecutor, ItemProcess
 
     @Override
     public void execute() {
-        List<HEntity> targets = manager.getPlantsSnapshot().stream()
+        List<HEntity> allPlants = manager.getPlantsSnapshot();
+        List<HEntity> targets = allPlants.stream()
                 .filter(this::shouldProcess)
                 .collect(Collectors.toList());
 
         String stateLabel = targetState ? "on" : "off";
         NotificationUtils.showSystemNotificationToUser(
                 manager.getExtension(),
-                "Setting canReproduce " + stateLabel + " started... (Found " + targets.size() + " plants)");
-        log.debug("[CanReproduce] Command started. target={}, plants to process={}", stateLabel, targets.size());
+                "Setting canReproduce " + stateLabel + " started... (Applying it to " + targets.size() + " out of " + allPlants.size() + " plants)");
+        log.debug("[CanReproduce] Command started. target={}, plants to process={}/{}", stateLabel, targets.size(), allPlants.size());
         processor.startProcessing(this, targets);
     }
 
