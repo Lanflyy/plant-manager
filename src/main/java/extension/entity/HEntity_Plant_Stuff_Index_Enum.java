@@ -7,7 +7,7 @@ public enum HEntity_Plant_Stuff_Index_Enum {
     RARITY_LEVEL(3),
     UNKNOWN_4(4),
     UNKNOWN_5(5),
-    UNKNOWN_6(6),
+    CAN_BREED(6),
     UNKNOWN_7(7),
     IS_DEAD(8),
     CAN_REPRODUCE(9),

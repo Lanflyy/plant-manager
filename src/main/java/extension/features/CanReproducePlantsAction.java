@@ -57,6 +57,9 @@ public class CanReproducePlantsAction implements UserActionExecutor, ItemProcess
         if (PlantUtils.isDeadPlant(plant)) {
             return false;
         }
+        if (!PlantUtils.isCanBreed(plant)) {
+            return false;
+        }
         // Only process plants owned by the current user
         int ownerIndex = HEntity_Plant_Stuff_Index_Enum.OWNER_ID.getIndex();
         Object[] stuff = plant.getStuff();

@@ -74,6 +74,19 @@ public class PlantUtils {
         }
         return ((Number) rarityLevel).intValue();
     }
+    public static boolean isCanBreed(HEntity entity) {
+        if (!isPlant(entity)) {
+            return false;
+        }
+        int index = HEntity_Plant_Stuff_Index_Enum.CAN_BREED.getIndex();
+        Object[] stuff = entity.getStuff();
+        if (stuff.length <= index) {
+            log.error("Checking canBreed, but stuff length is {}, expected at least {}", stuff.length, index + 1);
+            return false;
+        }
+        return Boolean.TRUE.equals(stuff[index]);
+    }
+
     public static boolean isDeadPlant(HEntity entity) {
     	if(!isPlant(entity)) {
     		log.error("Checking if dead plant, but it is not even a plant !");
