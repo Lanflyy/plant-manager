@@ -1,8 +1,10 @@
 package extension.features;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import extension.entity.ACTION_COMMAND_TYPE;
+import extension.entity.HEntity_Plant_Stuff_Index_Enum;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
 import gearth.extensions.parsers.HEntity;
@@ -20,16 +22,27 @@ public class CompostPlantsAction implements UserActionExecutor, ItemProcessingHa
 
     @Override
     public void execute() {
-        List<HEntity> plants = manager.getPlantsSnapshot();
-        long deadCount = plants.stream().filter(PlantUtils::isDeadPlant).count();
-        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Composting plants started... (Found " + deadCount + " dead plants)");
-        log.debug("[Plants] Compost command started. Dead plants: {}, Total plants: {}", deadCount, manager.getPlantCount());
+        List<HEntity> plants = manager.getPlantsSnapshot().stream()
+                .filter(this::shouldProcess)
+                .collect(Collectors.toList());
+        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Composting plants started... (Found " + plants.size() + " compostable plants)");
+        log.debug("[Plants] Compost command started. Plants to process: {}, Total plants: {}", plants.size(), manager.getPlantCount());
         processor.startProcessing(this, plants);
     }
 
     @Override
     public boolean shouldProcess(HEntity plant) {
-        return PlantUtils.isDeadPlant(plant);
+        if (!PlantUtils.isDeadPlant(plant)) {
+            return false;
+        }
+        int ownerIndex = HEntity_Plant_Stuff_Index_Enum.OWNER_ID.getIndex();
+        Object[] stuff = plant.getStuff();
+        if (stuff.length <= ownerIndex || !(stuff[ownerIndex] instanceof Number)) {
+            log.warn("[Compost] Plant {} has no readable owner id, skipping", plant.getId());
+            return false;
+        }
+        int ownerId = ((Number) stuff[ownerIndex]).intValue();
+        return ownerId == manager.getCurrentUserId();
     }
 
     @Override
