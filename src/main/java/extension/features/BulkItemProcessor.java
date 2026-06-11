@@ -1,16 +1,13 @@
 package extension.features;
 
-import gearth.extensions.ExtensionForm;
-import gearth.extensions.parsers.HEntity;
-
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import extension.entity.ACTION_COMMAND_TYPE;
 import extension.util.NotificationUtils;
+import gearth.extensions.ExtensionForm;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BulkItemProcessor {
@@ -50,20 +47,18 @@ public class BulkItemProcessor {
                     break;
                 }
 
-                boolean processed = false;
                 try {
                     if (handler.shouldProcess(item)) {
-                        processed = handler.process(item);
+                        boolean processed = handler.process(item);
+                        if (processed) {
+                            count++;
+                        }
+                        sleep();
                     }
                 } catch (Exception e) {
                     log.debug("[Plants] Handler processing encountered an error", e);
+                    sleep();
                 }
-
-                if (processed) {
-                    count++;
-                }
-
-                sleep();
             }
 
             if (processing.get()) {
