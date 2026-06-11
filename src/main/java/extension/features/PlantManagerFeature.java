@@ -33,6 +33,7 @@ public final class PlantManagerFeature {
     public static final String AUTO_BREED_OFF_COMMAND = ":plants autobreed off";
     public static final String AUTO_BREED_ADD_USER_COMMAND = ":plants autobreed adduser";
     public static final String AUTO_BREED_REMOVE_USER_COMMAND = ":plants autobreed removeuser";
+    public static final String COUNT_CAN_BREED_COMMAND = ":plants countcanbreed";
     public static final int PROCESS_DELAY_MS = 600;
 
     @Getter
@@ -166,6 +167,8 @@ public final class PlantManagerFeature {
             action = new CanReproducePlantsAction(this, processor, true);
         } else if (PlantManagerFeature.CAN_REPRODUCE_OFF_COMMAND.equals(text)) {
             action = new CanReproducePlantsAction(this, processor, false);
+        } else if (PlantManagerFeature.COUNT_CAN_BREED_COMMAND.equals(text)) {
+            action = new CountCanBreedAction(this);
         } else {
             log.error("[Chat] Unrecognized command: {}", text);
         }
@@ -178,6 +181,7 @@ public final class PlantManagerFeature {
     private boolean isCommand(String text) {
         return TREAT_COMMAND.equals(text) || COMPOST_COMMAND.equals(text) || SEED_COMMAND.equals(text)
                 || ABORT_COMMAND.equals(text) || CAN_REPRODUCE_ON_COMMAND.equals(text) || CAN_REPRODUCE_OFF_COMMAND.equals(text)
+                || COUNT_CAN_BREED_COMMAND.equals(text)
                 || isAutoBreedCommand(text);
     }
 

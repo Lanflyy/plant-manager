@@ -5,6 +5,7 @@ Commandes disponibles :
 - :plants seed                    -   Plante toutes graines dans la pièce actuelle.
 - :plants canreproduce on         -   Active "Peut se reproduire" pour toutes les plantes de la pièce actuelle.
 - :plants canreproduce off        -   Désactive "Peut se reproduire" pour toutes les plantes de la pièce actuelle.
+- :plants countcanbreed           -   Compte le nombre de plantes dans la pièce actuelle pouvant se reproduire.
 - :plants autobreed on            -   Active l'acceptation automatique de la reproduction des utilisateurs de confiance.
 - :plants autobreed off           -   Désactive l'acceptation automatique de la reproduction des utilisateurs de confiance.
 - :plants autobreed adduser NAME  -   Ajoute un utilisateur de confiance pour la reproduction automatique.

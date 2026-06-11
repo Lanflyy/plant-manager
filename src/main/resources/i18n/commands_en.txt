@@ -5,6 +5,7 @@ Available commands:
 - :plants seed                    -   Plant every seed in the current room.
 - :plants canreproduce on         -   Enable "Can Reproduce" for all plants in the current room.
 - :plants canreproduce off        -   Disable "Can Reproduce" for all plants in the current room.
+- :plants countcanbreed           -   Counts how many plants in the current room can breed.
 - :plants autobreed on            -   Enable auto-accept breeding from trusted users.
 - :plants autobreed off           -   Disable auto-accept breeding from trusted users.
 - :plants autobreed adduser NAME  -   Add a trusted auto-breed user.
