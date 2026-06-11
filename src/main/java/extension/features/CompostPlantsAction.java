@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import extension.entity.ACTION_COMMAND_TYPE;
-import extension.entity.HEntity_Plant_Stuff_Index_Enum;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
 import gearth.extensions.parsers.HEntity;
@@ -35,13 +34,11 @@ public class CompostPlantsAction implements UserActionExecutor, ItemProcessingHa
         if (!PlantUtils.isDeadPlant(plant)) {
             return false;
         }
-        int ownerIndex = HEntity_Plant_Stuff_Index_Enum.OWNER_ID.getIndex();
-        Object[] stuff = plant.getStuff();
-        if (stuff.length <= ownerIndex || !(stuff[ownerIndex] instanceof Number)) {
+        int ownerId = PlantUtils.getOwnerId(plant);
+        if (ownerId < 0) {
             log.warn("[Compost] Plant {} has no readable owner id, skipping", plant.getId());
             return false;
         }
-        int ownerId = ((Number) stuff[ownerIndex]).intValue();
         return ownerId == manager.getCurrentUserId();
     }
 

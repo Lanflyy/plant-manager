@@ -1,7 +1,6 @@
 package extension.features;
 
 import extension.entity.ACTION_COMMAND_TYPE;
-import extension.entity.HEntity_Plant_Stuff_Index_Enum;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
 import extension.util.SleepRateLimit;
@@ -61,13 +60,11 @@ public class CanReproducePlantsAction implements UserActionExecutor, ItemProcess
             return false;
         }
         // Only process plants owned by the current user
-        int ownerIndex = HEntity_Plant_Stuff_Index_Enum.OWNER_ID.getIndex();
-        Object[] stuff = plant.getStuff();
-        if (stuff.length <= ownerIndex || !(stuff[ownerIndex] instanceof Number)) {
+        int ownerId = PlantUtils.getOwnerId(plant);
+        if (ownerId < 0) {
             log.warn("[CanReproduce] Plant {} has no readable owner id, skipping", plant.getId());
             return false;
         }
-        int ownerId = ((Number) stuff[ownerIndex]).intValue();
         if (ownerId != manager.getCurrentUserId()) {
             log.debug("[CanReproduce] Plant {} is not owned by current user, skipping", plant.getId());
             return false;

@@ -74,6 +74,24 @@ public class PlantUtils {
         }
         return ((Number) rarityLevel).intValue();
     }
+    public static int getOwnerId(HEntity entity) {
+        if (!isPlant(entity)) {
+            return -1;
+        }
+        int index = HEntity_Plant_Stuff_Index_Enum.OWNER_ID.getIndex();
+        Object[] stuff = entity.getStuff();
+        if (stuff.length <= index || !(stuff[index] instanceof Number)) {
+            log.error("Checking owner id, but stuff[{}] is missing or not a number, stuff length is {}", index, stuff.length);
+            return -1;
+        }
+        int ownerId = ((Number) stuff[index]).intValue();
+        if (ownerId < 0) {
+            log.warn("Owner id is negative: {}", ownerId);
+            return -1;
+        }
+        return ownerId;
+    }
+
     public static boolean isCanBreed(HEntity entity) {
         if (!isPlant(entity)) {
             return false;
