@@ -6,10 +6,10 @@ Available commands:
 - :plants canreproduce on         -   Enable "Can Reproduce" for all plants in the current room.
 - :plants canreproduce off        -   Disable "Can Reproduce" for all plants in the current room.
 - :plants countcanbreed           -   Counts how many plants in the current room can breed.
-- :plants autobreed on            -   Enable auto-accept breeding from trusted users.
-- :plants autobreed off           -   Disable auto-accept breeding from trusted users.
+- :plants autobreed on            -   Enable auto-accept breeding (check Settings).
+- :plants autobreed off           -   Disable auto-accept breeding.
 - :plants autobreed adduser NAME  -   Add a trusted auto-breed user.
 - :plants autobreed adduser       -   Add a trusted auto-breed user by clicking them.
 - :plants autobreed removeuser NAME - Remove a trusted auto-breed user.
 - :plants autobreed removeuser    -   Remove a trusted auto-breed user by clicking them.
-- :plants abort                   -   Stop the active plant action.
+- :plants abort                   -   Stop any current processing plant action.
