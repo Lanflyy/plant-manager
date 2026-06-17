@@ -3,6 +3,8 @@ package extension.features;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
+
 import extension.entity.ACTION_COMMAND_TYPE;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
@@ -48,13 +50,15 @@ public class CompostPlantsAction implements UserActionExecutor, ItemProcessingHa
         boolean sent = manager.getExtension().sendToServer(new HPacket(packetHeader, HMessage.Direction.TOSERVER, plant.getId()));
         log.debug("[{}] Plant {} {}", packetHeader, plant.getId(), sent ? "sent" : "failed");
         if (sent) {
-            manager.removePlantById(plant.getId());
+            // Packet EntityRemove will be received to remove the plant from memory, no need to do it manually here
+            // manager.removePlantById(plant.getId());
             return true;
         }
         return false;
     }
 
 	@Override
+    @NonNull
 	public ACTION_COMMAND_TYPE getActionCommandType() {
 		return ACTION_COMMAND_TYPE.COMPOST;
 	}
