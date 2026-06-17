@@ -130,8 +130,26 @@ public class RoomEntityState {
     }
 
     /**
-     * Packet structure: {@code {i:index}{i:petId}{b:canBreed}{b:false}{b:false}{b:canReproduce}}
-     * The 4 booleans after petId are: canBreed, always-false, always-false, canReproduce.
+     * Updates the isDead flag on the in-memory HEntity for the given pet id.
+     */
+    public void updateIsDead(int petId, boolean isDead) {
+        HEntity entity = entities.get(petId);
+        if (entity == null) {
+            log.warn("[RoomEntityState] updateIsDead: entity {} not in memory", petId);
+            return;
+        }
+        int index = HEntity_Plant_Stuff_Index_Enum.IS_DEAD.getIndex();
+        boolean updated = PlantUtils.updateIndexPlantEntity(entity, index, isDead);
+        if (updated) {
+            log.debug("[RoomEntityState] Updated isDead={} for entity {}", isDead, petId);
+        } else {
+            log.error("[RoomEntityState] updateIsDead: failed to update entity {}", petId);
+        }
+    }
+
+    /**
+     * Packet structure: {@code {i:index}{i:petId}{b:canBreed}{b:false}{b:isDead}{b:canReproduce}}
+     * The 4 booleans after petId are: canBreed, always-false, isDead, canReproduce.
      * An empty string ({@code 00 00}) has identical bytes to two false booleans,
      * which is why the old boolean+string+boolean parse happened to work.
      */
@@ -143,9 +161,10 @@ public class RoomEntityState {
             int petId = packet.readInteger();
             boolean canBreed = packet.readBoolean();
             packet.readBoolean(); // always false
-            packet.readBoolean(); // always false
+            boolean isDead = packet.readBoolean();
             boolean canReproduce = packet.readBoolean();
             updateCanBreed(petId, canBreed);
+            updateIsDead(petId, isDead);
             updateCanReproduce(petId, canReproduce);
         } catch (Exception e) {
             log.debug("[RoomEntityState] Failed to parse PetStatusUpdate packet", e);
