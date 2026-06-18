@@ -5,6 +5,11 @@ All notable changes to the Plant Manager extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-06-17
+### Fixed
+* Bugfix: PetStatusUpdate packet was not updating `isDead` plant status in memory, causing plants detected as alive and not possible to compost when entering a room with a plant that became dead, or when a plant becomes dead on real-time.
+* Bugfix: Warning about untracked entity pet info was showing on the log because of removal occurring 2 times.
+
 ## [1.3.1] - 2026-06-11
 
 ### Added
@@ -71,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dynamic logging level
 - Basic plant management features
 
+[1.3.2]: https://github.com/Lanflyy/plant-manager/compare/1.3.1...1.3.2
 [1.3.1]: https://github.com/Lanflyy/plant-manager/compare/1.3.0...1.3.1
 [1.3.0]: https://github.com/Lanflyy/plant-manager/compare/1.2.0...1.3.0
 [1.2.0]: https://github.com/Lanflyy/plant-manager/compare/1.1.0...1.2.0
