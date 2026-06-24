@@ -31,7 +31,8 @@ public class RoomEntityState {
     public RoomEntityState(ExtensionForm extension) {
         extension.intercept(HMessage.Direction.TOCLIENT, "Users", this::handleUsers);
         extension.intercept(HMessage.Direction.TOCLIENT, "UserRemove", this::handleUserRemove);
-        extension.intercept(HMessage.Direction.TOSERVER, "GetGuestRoom", this::handleGetGuestRoom);
+        extension.intercept(HMessage.Direction.TOCLIENT, "RoomReady", this::handleRoomReady);
+        extension.intercept(HMessage.Direction.TOCLIENT, "CloseConnection", this::handleCloseConnection);
         extension.intercept(HMessage.Direction.TOSERVER, "Quit", this::handleQuit);
         extension.intercept(HMessage.Direction.TOSERVER, "RemovePetFromFlat", this::handleRemovePetFromFlat);
         extension.intercept(HMessage.Direction.TOCLIENT, "PetStatusUpdate", this::handlePetStatusUpdate);
@@ -177,11 +178,6 @@ public class RoomEntityState {
             packet.resetReadIndex();
             HEntity[] parsedEntities = HEntity.parse(packet);
 
-            if (parsedEntities.length > 1) {
-                log.trace("[Users] Detected full room user list ({} entities). Clearing entities.", parsedEntities.length);
-                clearEntities();
-            }
-
             for (HEntity entity : parsedEntities) {
                 addEntity(entity);
             }
@@ -219,16 +215,16 @@ public class RoomEntityState {
         }
     }
 
-    private void handleGetGuestRoom(HMessage hMessage) {
-        HPacket packet = hMessage.getPacket();
-        packet.resetReadIndex();
-        packet.readInteger(); // roomId
-        int requestType = packet.readInteger();
+    private void handleRoomReady(HMessage hMessage) {
+        clearEntities();
+        setInitialized(false);
+        log.debug("[RoomReady] Room entities reset");
+    }
 
-        if (requestType == 0) {
-            clearEntities();
-            setInitialized(false);
-        }
+    private void handleCloseConnection(HMessage hMessage) {
+        clearEntities();
+        setInitialized(false);
+        log.debug("[CloseConnection] Room entities reset");
     }
 
     private void handleQuit(HMessage hMessage) {

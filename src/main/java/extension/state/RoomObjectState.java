@@ -20,7 +20,8 @@ public class RoomObjectState {
         extension.intercept(HMessage.Direction.TOCLIENT, "Objects", this::handleObjects);
         extension.intercept(HMessage.Direction.TOCLIENT, "ObjectAdd", this::handleObjectAdd);
         extension.intercept(HMessage.Direction.TOCLIENT, "ObjectRemove", this::handleObjectRemove);
-        extension.intercept(HMessage.Direction.TOSERVER, "GetGuestRoom", this::handleGetGuestRoom);
+        extension.intercept(HMessage.Direction.TOCLIENT, "RoomReady", this::handleRoomReady);
+        extension.intercept(HMessage.Direction.TOCLIENT, "CloseConnection", this::handleCloseConnection);
         extension.intercept(HMessage.Direction.TOSERVER, "Quit", this::handleQuit);
     }
 
@@ -35,6 +36,7 @@ public class RoomObjectState {
     private void handleObjects(HMessage hMessage) {
         try {
             HFloorItem[] items = HFloorItem.parse(hMessage.getPacket());
+            floorItems.clear();
             for (HFloorItem item : items) {
                 floorItems.put(item.getId(), item);
             }
@@ -66,15 +68,14 @@ public class RoomObjectState {
         }
     }
 
-    private void handleGetGuestRoom(HMessage hMessage) {
-        HPacket packet = hMessage.getPacket();
-        packet.resetReadIndex();
-        packet.readInteger(); // roomId
-        int requestType = packet.readInteger();
+    private void handleRoomReady(HMessage hMessage) {
+        clearFloorItems();
+        log.debug("[RoomReady] Room objects reset");
+    }
 
-        if (requestType == 0) {
-            clearFloorItems();
-        }
+    private void handleCloseConnection(HMessage hMessage) {
+        clearFloorItems();
+        log.debug("[CloseConnection] Room objects reset");
     }
 
     private void handleQuit(HMessage hMessage) {
