@@ -20,6 +20,7 @@ public class RoomObjectState {
         extension.intercept(HMessage.Direction.TOCLIENT, "Objects", this::handleObjects);
         extension.intercept(HMessage.Direction.TOCLIENT, "ObjectAdd", this::handleObjectAdd);
         extension.intercept(HMessage.Direction.TOCLIENT, "ObjectRemove", this::handleObjectRemove);
+        extension.intercept(HMessage.Direction.TOCLIENT, "ObjectRemoveMultiple", this::handleObjectRemoveMultiple);
         extension.intercept(HMessage.Direction.TOCLIENT, "RoomReady", this::handleRoomReady);
         extension.intercept(HMessage.Direction.TOCLIENT, "CloseConnection", this::handleCloseConnection);
         extension.intercept(HMessage.Direction.TOSERVER, "Quit", this::handleQuit);
@@ -36,7 +37,7 @@ public class RoomObjectState {
     private void handleObjects(HMessage hMessage) {
         try {
             HFloorItem[] items = HFloorItem.parse(hMessage.getPacket());
-            floorItems.clear();
+            // Objects can also add temporary furni after room load; room lifecycle packets clear stale state.
             for (HFloorItem item : items) {
                 floorItems.put(item.getId(), item);
             }
@@ -65,6 +66,20 @@ public class RoomObjectState {
             floorItems.remove(id);
         } catch (Exception e) {
             log.debug("[ObjectRemove] Failed to parse removed object", e);
+        }
+    }
+
+    private void handleObjectRemoveMultiple(HMessage hMessage) {
+        HPacket packet = hMessage.getPacket();
+        try {
+            packet.resetReadIndex();
+            int count = packet.readInteger();
+            for (int i = 0; i < count; i++) {
+                floorItems.remove(packet.readInteger());
+            }
+            log.debug("[ObjectRemoveMultiple] Removed {} objects", count);
+        } catch (Exception e) {
+            log.debug("[ObjectRemoveMultiple] Failed to parse removed objects", e);
         }
     }
 
