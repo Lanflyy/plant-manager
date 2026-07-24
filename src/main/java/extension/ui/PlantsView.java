@@ -3,6 +3,7 @@ package extension.ui;
 import extension.logging.UiLogPrinter;
 import javafx.application.Platform;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.VBox;
 import lombok.RequiredArgsConstructor;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -18,7 +19,7 @@ public final class PlantsView {
     private String commandsText;
     private String language = DEFAULT_LANG;
 
-    private final TextArea commandsArea;
+    private final VBox commandsBox;
     private final TextArea logArea;
     private volatile boolean initialized;
 
@@ -29,20 +30,17 @@ public final class PlantsView {
         initialized = true;
         UiLogPrinter.attach(logArea);
         loadCommandsText();
-        runOnUiThread(() -> commandsArea.setText(commandsText));
     }
 
     public void setLanguage(String lang) {
         this.language = lang;
         loadCommandsText();
-        runOnUiThread(() -> commandsArea.setText(commandsText));
     }
 
     private void loadCommandsText() {
         String resourcePath = String.format(COMMANDS_RESOURCE_FORMAT, language);
         try (InputStream in = getClass().getResourceAsStream(resourcePath)) {
             if (in == null) {
-                // fallback to English if not found
                 try (InputStream fallback = getClass().getResourceAsStream(String.format(COMMANDS_RESOURCE_FORMAT, DEFAULT_LANG))) {
                     if (fallback == null) {
                         commandsText = "[Failed to load commands]";

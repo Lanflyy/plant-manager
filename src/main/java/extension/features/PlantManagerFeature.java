@@ -48,17 +48,18 @@ public final class PlantManagerFeature {
 
     private BulkItemProcessor processor;
     private AutoBreedFeature autoBreedFeature;
+    private Runnable onStateChanged;
 
     public void install() {
-        // initialize states
         this.roomEntityState = new RoomEntityState(extension);
         this.roomObjectState = new RoomObjectState(extension);
         this.sessionState = new SessionState(extension);
 
-        // initialize processor and handlers
         this.processor = new BulkItemProcessor(this, extension);
         this.autoBreedFeature = new AutoBreedFeature(this);
         this.autoBreedFeature.install();
+
+        roomEntityState.setOnStateChanged(this::notifyStateChanged);
 
         extension.intercept(HMessage.Direction.TOCLIENT, "PetInfo", TreatPlantsAction::handlePetInfo);
         extension.intercept(HMessage.Direction.TOCLIENT, "PetStatusUpdate", CanReproducePlantsAction::handlePetStatusUpdate);
@@ -67,6 +68,16 @@ public final class PlantManagerFeature {
         extension.intercept(HMessage.Direction.TOSERVER, "Quit", this::handleQuit);
         
         log.info("[Plants] Extension installed");
+    }
+
+    public void setOnStateChanged(Runnable callback) {
+        this.onStateChanged = callback;
+    }
+
+    private void notifyStateChanged() {
+        if (onStateChanged != null) {
+            onStateChanged.run();
+        }
     }
 
     public void requestInfo() {

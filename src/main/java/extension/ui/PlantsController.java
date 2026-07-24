@@ -1,38 +1,39 @@
 package extension.ui;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import extension.entity.AutoBreedTrustedUser;
+import extension.util.PlantSettings;
+import gearth.misc.Cacher;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.CheckBox;
+import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.event.EventHandler;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.animation.PauseTransition;
-import javafx.application.Platform;
-import javafx.util.Duration;
-import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-
+import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import extension.util.PlantSettings;
-import gearth.misc.Cacher;
-
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class PlantsController {
@@ -51,10 +52,14 @@ public class PlantsController {
     private TableColumn<AutoBreedTrustedUser, String> autoBreedUsernameColumn;
     private Tooltip ttPetInfoHelp;
 
+    private final VBox commandsBox;
+    private Label connectedLbl;
+    private Label roomLbl;
+
     private final PlantsView view;
 
     public PlantsController(
-        TextArea commandsArea,
+        VBox commandsBox,
         TextArea logArea,
         ComboBox<String> logLevelCombo,
         CheckBox chkRequestPetInfo,
@@ -65,7 +70,9 @@ public class PlantsController {
         TextField txtAutoBreedUsername,
         Button btnAutoBreedAdd,
         Button btnAutoBreedRemove,
-        TableView<AutoBreedTrustedUser> tblAutoBreedUsers
+        TableView<AutoBreedTrustedUser> tblAutoBreedUsers,
+        Label connectedLbl,
+        Label roomLbl
     ) {
         this.logLevelCombo = logLevelCombo;
         this.chkRequestPetInfo = chkRequestPetInfo;
@@ -77,12 +84,16 @@ public class PlantsController {
         this.btnAutoBreedAdd = btnAutoBreedAdd;
         this.btnAutoBreedRemove = btnAutoBreedRemove;
         this.tblAutoBreedUsers = tblAutoBreedUsers;
-        this.view = new PlantsView(commandsArea, logArea);
+        this.commandsBox = commandsBox;
+        this.connectedLbl = connectedLbl;
+        this.roomLbl = roomLbl;
+        this.view = new PlantsView(commandsBox, logArea);
     }
 
     public void initialize() {
         view.initialize();
         log.debug("[Plants] UI initialized");
+        initCommandsBox();
         initLogLevelControl();
         initSettingsControl();
         initLabeledControlSizing();
@@ -90,10 +101,116 @@ public class PlantsController {
         initHelpIcon();
     }
 
+    private void initCommandsBox() {
+        if (commandsBox == null) return;
+
+        Platform.runLater(() -> {
+            Label header = new Label("Available commands:");
+            header.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 4 6;");
+            commandsBox.getChildren().add(header);
+
+            String[][] commands = {
+                {":plants", "Treat every living plant in the current room"},
+                {":plants compost", "Compost every dead plant in the current room"},
+                {":plants seed", "Plant every seed in the current room"},
+                {":plants canreproduce on", "Enable \"Can Reproduce\" for all plants"},
+                {":plants canreproduce off", "Disable \"Can Reproduce\" for all plants"},
+                {":plants countcanbreed", "Count how many plants can breed"},
+                {":plants autobreed on", "Enable auto-accept breeding (check Settings)"},
+                {":plants autobreed off", "Disable auto-accept breeding"},
+                {":plants autobreed adduser NAME", "Add a trusted auto-breed user"},
+                {":plants autobreed adduser", "Add a trusted auto-breed user by clicking them"},
+                {":plants autobreed removeuser NAME", "Remove a trusted auto-breed user"},
+                {":plants autobreed removeuser", "Remove a trusted auto-breed user by clicking them"},
+                {":plants abort", "Stop any current processing plant action"}
+            };
+
+            for (int i = 0; i < commands.length; i++) {
+                commandsBox.getChildren().add(createCommandRow(commands[i][0], commands[i][1], i));
+            }
+        });
+    }
+
+    private HBox createCommandRow(String command, String description, int index) {
+        HBox row = new HBox(4.0);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle(index % 2 == 0
+            ? "-fx-padding: 1 6;"
+            : "-fx-background-color: rgba(127,127,127,0.15); -fx-padding: 1 6;");
+
+        javafx.scene.control.TextField commandField = new javafx.scene.control.TextField(command);
+        commandField.setEditable(false);
+        commandField.setPrefColumnCount(command.length() + 1);
+        commandField.setMaxHeight(Double.MAX_VALUE);
+        commandField.setStyle("-fx-font-size: 12px; -fx-font-family: monospace; -fx-background-color: transparent; -fx-border-color: transparent; -fx-background-insets: 0; -fx-padding: 0 0 0 6;");
+
+        Button helpButton = new Button("(?)");
+        helpButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #2b7df6; -fx-font-weight: bold; -fx-border-color: transparent; -fx-cursor: hand; -fx-padding: 0;");
+        helpButton.setMinSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+        helpButton.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+        helpButton.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+
+        Tooltip tooltip = new Tooltip(description);
+        helpButton.setOnMouseEntered(e -> {
+            if (!tooltip.isShowing()) {
+                Point2D p = helpButton.localToScreen(0, helpButton.getHeight());
+                tooltip.show(helpButton, p.getX() + 8.0, p.getY() + 6.0);
+            }
+        });
+        helpButton.setOnMouseExited(e -> tooltip.hide());
+
+        EventHandler<MouseEvent> mouseHandler = e -> {
+            if (e.getTarget() == row) {
+                commandField.requestFocus();
+                if (e.getClickCount() >= 2) {
+                    commandField.selectAll();
+                } else {
+                    Point2D p = commandField.sceneToLocal(e.getSceneX(), e.getSceneY());
+                    int charIndex = (int) Math.round((p.getX() - 6) / 7.2);
+                    charIndex = Math.max(0, Math.min(command.length(), charIndex));
+
+                    if (e.getEventType() == MouseEvent.MOUSE_PRESSED) {
+                        commandField.positionCaret(charIndex);
+                        commandField.deselect();
+                    } else if (e.getEventType() == MouseEvent.MOUSE_DRAGGED) {
+                        commandField.selectPositionCaret(charIndex);
+                    }
+                }
+                e.consume();
+            }
+        };
+        row.setOnMousePressed(mouseHandler);
+        row.setOnMouseDragged(mouseHandler);
+
+        row.getChildren().addAll(commandField, helpButton);
+        return row;
+    }
+
+    public void updateConnectionState(boolean connected) {
+        Platform.runLater(() -> {
+            if (connectedLbl != null) {
+                connectedLbl.setText(connected ? "Connected" : "Not connected");
+                connectedLbl.setStyle(connected
+                    ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
+                    : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+            }
+        });
+    }
+
+    public void updateRoomState(boolean inRoom) {
+        Platform.runLater(() -> {
+            if (roomLbl != null) {
+                roomLbl.setText(inRoom ? "Room Loaded" : "Room Not Loaded");
+                roomLbl.setStyle(inRoom
+                    ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
+                    : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+            }
+        });
+    }
+
     private void initSettingsControl() {
         try {
             if (chkRequestPetInfo == null) return;
-            // initialize from current setting
             chkRequestPetInfo.setSelected(PlantSettings.isRequestPetInfoBeforeTreat());
             chkRequestPetInfo.setOnAction(e -> PlantSettings.setRequestPetInfoBeforeTreat(chkRequestPetInfo.isSelected()));
         } catch (Exception e) {
@@ -102,7 +219,6 @@ public class PlantsController {
     }
 
     public void helpPetInfoClick() {
-        // Click action is intentionally left empty as tooltip is now hover-based
     }
 
     private void initLabeledControlSizing() {
@@ -291,22 +407,18 @@ public class PlantsController {
     private void initHelpIcon() {
         try {
             if (btnPetInfoHelp == null) return;
-            // Use simple text icon instead of SVG
             btnPetInfoHelp.setGraphic(null);
             btnPetInfoHelp.setText("(?)");
-            // Ensure bold blue styling and transparent background, remove borders and focus rings
             try {
                 btnPetInfoHelp.setStyle("-fx-font-weight: bold; -fx-text-fill: #2b7df6; -fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0; -fx-background-insets: 0; -fx-border-insets: 0; -fx-padding: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
             } catch (Exception ignored) {}
 
-            // Size the button to its content (text) exactly
             try {
                 btnPetInfoHelp.setMinSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
                 btnPetInfoHelp.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
                 btnPetInfoHelp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
             } catch (Exception ignored) {}
 
-            // Prepare a programmatic tooltip and attach it to the button (hover shows it)
             try {
                 String tip = "When enabled, the extension will request plant (pet) info before treating it.\n" +
                         "This is done to avoid sending treats that shouldn't be sent (e.g. if well being is already very high).";
@@ -343,18 +455,14 @@ public class PlantsController {
             if (logLevelCombo == null) return;
             logLevelCombo.setItems(VALID_LOG_LEVELS);
 
-            // Load persisted level from cache.json, fallback to INFO if missing or invalid
             String cached = loadCachedLogLevel();
             logLevelCombo.getSelectionModel().select(cached);
-
-            // Use default cell rendering (no additional highlight)
 
             logLevelCombo.setOnAction(e -> {
                 String lvl = logLevelCombo.getValue();
                 if (lvl != null) setLogLevel(lvl);
             });
 
-            // apply initial level
             setLogLevel(logLevelCombo.getValue());
         } catch (Exception e) {
             log.error("Failed to initialize log level control", e);
@@ -392,11 +500,6 @@ public class PlantsController {
         view.clearLogs();
     }
 }
-
-
-
-
-
 
 
 

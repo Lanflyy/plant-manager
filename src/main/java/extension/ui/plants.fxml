@@ -40,14 +40,36 @@
 
                <children>
 
-                  <TextArea fx:id="commandsArea"
-                            editable="false"
-                            maxHeight="Infinity"
-                            maxWidth="Infinity"
-                            prefHeight="350.0"
-                            wrapText="true"
-                            style="-fx-font-size: 12px; -fx-font-family: monospace;"
-                            VBox.vgrow="ALWAYS" />
+                  <HBox spacing="10.0" VBox.vgrow="ALWAYS">
+                     <children>
+
+                        <VBox spacing="4.0"
+                              prefWidth="150.0"
+                              style="-fx-border-color: lightgrey; -fx-border-width: 1px; -fx-border-radius: 5px; -fx-padding: 8;">
+                           <children>
+                              <Label text="State"
+                                     style="-fx-font-size: 12px; -fx-font-weight: bold;" />
+                              <Label fx:id="connectedLbl"
+                                     text="Not connected"
+                                     alignment="CENTER"
+                                     maxWidth="Infinity"
+                                     style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;" />
+                              <Label fx:id="roomLbl"
+                                     text="Room Not Loaded"
+                                     alignment="CENTER"
+                                     maxWidth="Infinity"
+                                     style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;" />
+                           </children>
+                        </VBox>
+
+                        <VBox fx:id="commandsBox"
+                              spacing="0.0"
+                              style="-fx-border-color: lightgrey; -fx-border-width: 1px; -fx-border-radius: 5px; -fx-padding: 1;"
+                              VBox.vgrow="ALWAYS"
+                              HBox.hgrow="ALWAYS" />
+
+                     </children>
+                  </HBox>
 
                </children>
 

@@ -28,6 +28,8 @@ public class RoomEntityState {
     @Setter
     private volatile boolean initialized;
 
+    private Runnable onStateChanged;
+
     public RoomEntityState(ExtensionForm extension) {
         extension.intercept(HMessage.Direction.TOCLIENT, "Users", this::handleUsers);
         extension.intercept(HMessage.Direction.TOCLIENT, "UserRemove", this::handleUserRemove);
@@ -36,6 +38,17 @@ public class RoomEntityState {
         extension.intercept(HMessage.Direction.TOSERVER, "Quit", this::handleQuit);
         extension.intercept(HMessage.Direction.TOSERVER, "RemovePetFromFlat", this::handleRemovePetFromFlat);
         extension.intercept(HMessage.Direction.TOCLIENT, "PetStatusUpdate", this::handlePetStatusUpdate);
+    }
+
+    public void setOnStateChanged(Runnable callback) {
+        this.onStateChanged = callback;
+    }
+
+    public void setInitialized(boolean initialized) {
+        this.initialized = initialized;
+        if (onStateChanged != null) {
+            onStateChanged.run();
+        }
     }
 
     public void addEntity(HEntity entity) {

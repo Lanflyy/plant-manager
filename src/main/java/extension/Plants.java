@@ -9,9 +9,11 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -24,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class Plants extends ExtensionForm {
 
     @FXML
-    private TextArea commandsArea;
+    private VBox commandsBox;
     @FXML
     private TextArea logArea;
     @FXML
@@ -47,12 +49,16 @@ public class Plants extends ExtensionForm {
     private Button btnAutoBreedRemove;
     @FXML
     private TableView<AutoBreedTrustedUser> tblAutoBreedUsers;
+    @FXML
+    private Label connectedLbl;
+    @FXML
+    private Label roomLbl;
 
     private PlantsController uiController;
     private PlantManagerFeature plantManagerFeature;
 
     public void initialize() {
-        uiController = new PlantsController(commandsArea, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers);
+        uiController = new PlantsController(commandsBox, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers, connectedLbl, roomLbl);
         uiController.initialize();
     }
 
@@ -67,12 +73,17 @@ public class Plants extends ExtensionForm {
 
     @Override
     protected void initExtension() {
-        // If the PacketInfoManager has data during initExtension, it means the extension
-        // was attached while G-Earth was already connected to the game client.
         isAlreadyConnected = getPacketInfoManager() != null && !getPacketInfoManager().getPacketInfoList().isEmpty();
         
         plantManagerFeature = new PlantManagerFeature(this);
         plantManagerFeature.install();
+        plantManagerFeature.setOnStateChanged(this::updateStateLabels);
+    }
+
+    private void updateStateLabels() {
+        if (uiController == null) return;
+        boolean inRoom = plantManagerFeature.isInitialized();
+        uiController.updateRoomState(inRoom);
     }
 
     @FXML
@@ -85,17 +96,18 @@ public class Plants extends ExtensionForm {
     @Override
     protected void onStartConnection() {
         log.debug("[Connection] Started");
+        uiController.updateConnectionState(true);
         
-        // Only request info manually if the extension was attached mid-session.
-        // Otherwise, the client will send it naturally during the login sequence.
         if (isAlreadyConnected && plantManagerFeature != null) {
             plantManagerFeature.requestInfo();
-            isAlreadyConnected = false; // Reset so reconnecting behaves normally
+            isAlreadyConnected = false;
         }
     }
 
     @Override
     protected void onEndConnection() {
+        uiController.updateConnectionState(false);
+        uiController.updateRoomState(false);
         if (plantManagerFeature != null) {
             plantManagerFeature.reset();
         }
