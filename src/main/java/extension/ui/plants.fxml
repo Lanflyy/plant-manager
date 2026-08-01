@@ -44,7 +44,7 @@
                      <children>
 
                         <VBox spacing="4.0"
-                              prefWidth="150.0"
+                              prefWidth="170.0"
                               style="-fx-border-color: lightgrey; -fx-border-width: 1px; -fx-border-radius: 5px; -fx-padding: 8;">
                            <children>
                               <Label text="State"
@@ -54,11 +54,20 @@
                                      alignment="CENTER"
                                      maxWidth="Infinity"
                                      style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;" />
-                              <Label fx:id="roomLbl"
-                                     text="Room Not Loaded"
-                                     alignment="CENTER"
-                                     maxWidth="Infinity"
-                                     style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;" />
+                               <Label fx:id="roomLbl"
+                                      text="Room Not Loaded"
+                                      alignment="CENTER"
+                                      maxWidth="Infinity"
+                                      style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;" />
+                               <Label fx:id="furniDataStateLbl"
+                                      text="Furni Data Not Loaded"
+                                      alignment="CENTER"
+                                      maxWidth="Infinity"
+                                      style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;" />
+                               <Button text="Reload Furni Data"
+                                       onAction="#onRequestFurniData"
+                                       maxWidth="Infinity"
+                                       prefHeight="25.0" />
                            </children>
                         </VBox>
 
@@ -66,7 +75,13 @@
                               spacing="0.0"
                               style="-fx-border-color: lightgrey; -fx-border-width: 1px; -fx-border-radius: 5px; -fx-padding: 1;"
                               VBox.vgrow="ALWAYS"
-                              HBox.hgrow="ALWAYS" />
+                              HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label fx:id="lblAvailableCommands"
+                                     text="Available commands:"
+                                     style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 4 6;" />
+                           </children>
+                        </VBox>
 
                      </children>
                   </HBox>
@@ -150,31 +165,26 @@
                   <Label text="Advanced options"
                          style="-fx-font-size: 14px; -fx-font-weight: bold;" />
 
-                  <VBox spacing="1.0">
-
+                  <VBox spacing="8.0">
                      <children>
-
-                        <HBox spacing="4.0"
-                               alignment="CENTER_LEFT">
-
+                        <HBox spacing="4.0" alignment="CENTER_LEFT">
                            <children>
-
                               <CheckBox fx:id="chkRequestPetInfo"
                                         selected="true"
                                         text="Request Plant info before treating plant"
-                                        style="-fx-padding: 0;" />
-
+                                        minHeight="-Infinity"
+                                        style="-fx-padding: 2 4 2 4;" />
                               <Button fx:id="btnPetInfoHelp"
                                       text="(?)"
                                       mnemonicParsing="false"
-                                      style="-fx-background-color: transparent; -fx-text-fill: #2b7df6; -fx-font-weight: bold; -fx-border-color: transparent; -fx-cursor: hand; -fx-padding: 0;" />
-
+                                      style="-fx-font-weight: bold; -fx-text-fill: #2b7df6; -fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0; -fx-background-insets: 0; -fx-border-insets: 0; -fx-padding: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-cursor: hand;" />
                            </children>
-
                         </HBox>
-
+                        <CheckBox fx:id="loadFurniDataOnlyWhenNeeded"
+                                  text="Load furni data only when needed"
+                                  minHeight="-Infinity"
+                                  style="-fx-padding: 2 4 2 4;" />
                      </children>
-
                   </VBox>
 
                   <Region prefHeight="2.0" />
@@ -183,35 +193,26 @@
                   <Label text="Auto-accept breeding"
                          style="-fx-font-size: 14px; -fx-font-weight: bold;" />
 
-                   <VBox spacing="1.0">
-
+                   <VBox spacing="8.0">
                       <children>
-
-                         <HBox spacing="8.0"
-                                alignment="CENTER_LEFT">
-
+                         <HBox spacing="8.0" alignment="CENTER_LEFT">
                             <children>
-
                                <CheckBox fx:id="chkAutoBreed"
                                          text="Enable auto-accept breeding from"
-                                         style="-fx-padding: 0;" />
-
+                                         minHeight="-Infinity"
+                                         style="-fx-padding: 2 4 2 4;" />
                                <ComboBox fx:id="cmbAutoBreedAcceptMode"
                                          prefWidth="160.0"
                                          prefHeight="25.0"
                                          style="-fx-border-color:#000000; -fx-border-width:1; -fx-background-color:#ffffff; -fx-text-fill:#000000;" />
-
                             </children>
-
                          </HBox>
-
                          <CheckBox fx:id="chkAutoBreedRequireSameOrHigherRarity"
                                    text="Auto accept only if rarity level is same level or higher"
                                    selected="true"
-                                   style="-fx-padding: 0;" />
-
+                                   minHeight="-Infinity"
+                                   style="-fx-padding: 2 4 2 4;" />
                       </children>
-
                    </VBox>
 
                   <HBox spacing="8.0"
@@ -224,10 +225,14 @@
                                    HBox.hgrow="ALWAYS" />
 
                         <Button fx:id="btnAutoBreedAdd"
-                                text="Add" />
+                                text="Add"
+                                minHeight="-Infinity"
+                                style="-fx-padding: 2 4 2 4;" />
 
                         <Button fx:id="btnAutoBreedRemove"
-                                text="Remove checked" />
+                                text="Remove checked"
+                                minHeight="-Infinity"
+                                style="-fx-padding: 2 4 2 4;" />
 
                      </children>
 
@@ -238,8 +243,12 @@
 
                   <TableView fx:id="tblAutoBreedUsers"
                              editable="true"
+                             fixedCellSize="30.0"
+                             style="-fx-cell-size: 30px;"
                              prefHeight="150.0"
-                             VBox.vgrow="ALWAYS" />
+                             VBox.vgrow="ALWAYS">
+                      <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /></columnResizePolicy>
+                  </TableView>
 
                </children>
 

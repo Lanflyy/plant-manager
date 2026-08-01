@@ -13,23 +13,22 @@ import gearth.misc.Cacher;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.Labeled;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.event.EventHandler;
 import javafx.scene.control.Tooltip;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -41,6 +40,7 @@ public class PlantsController {
     private final ComboBox<String> logLevelCombo;
     private final CheckBox chkRequestPetInfo;
     private final Button btnPetInfoHelp;
+    private final CheckBox loadFurniDataOnlyWhenNeeded;
     private final CheckBox chkAutoBreed;
     private final ComboBox<String> cmbAutoBreedAcceptMode;
     private final CheckBox chkAutoBreedRequireSameOrHigherRarity;
@@ -64,6 +64,7 @@ public class PlantsController {
         ComboBox<String> logLevelCombo,
         CheckBox chkRequestPetInfo,
         Button btnPetInfoHelp,
+        CheckBox loadFurniDataOnlyWhenNeeded,
         CheckBox chkAutoBreed,
         ComboBox<String> cmbAutoBreedAcceptMode,
         CheckBox chkAutoBreedRequireSameOrHigherRarity,
@@ -77,6 +78,7 @@ public class PlantsController {
         this.logLevelCombo = logLevelCombo;
         this.chkRequestPetInfo = chkRequestPetInfo;
         this.btnPetInfoHelp = btnPetInfoHelp;
+        this.loadFurniDataOnlyWhenNeeded = loadFurniDataOnlyWhenNeeded;
         this.chkAutoBreed = chkAutoBreed;
         this.cmbAutoBreedAcceptMode = cmbAutoBreedAcceptMode;
         this.chkAutoBreedRequireSameOrHigherRarity = chkAutoBreedRequireSameOrHigherRarity;
@@ -96,7 +98,6 @@ public class PlantsController {
         initCommandsBox();
         initLogLevelControl();
         initSettingsControl();
-        initLabeledControlSizing();
         initAutoBreedControls();
         initHelpIcon();
     }
@@ -105,10 +106,6 @@ public class PlantsController {
         if (commandsBox == null) return;
 
         Platform.runLater(() -> {
-            Label header = new Label("Available commands:");
-            header.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 4 6;");
-            commandsBox.getChildren().add(header);
-
             String[][] commands = {
                 {":plants", "Treat every living plant in the current room"},
                 {":plants compost", "Compost every dead plant in the current room"},
@@ -218,24 +215,6 @@ public class PlantsController {
         }
     }
 
-    public void helpPetInfoClick() {
-    }
-
-    private void initLabeledControlSizing() {
-        prepareLabeledControl(chkRequestPetInfo);
-        prepareLabeledControl(chkAutoBreed);
-        prepareLabeledControl(chkAutoBreedRequireSameOrHigherRarity);
-        prepareLabeledControl(btnAutoBreedAdd);
-        prepareLabeledControl(btnAutoBreedRemove);
-    }
-
-    private void prepareLabeledControl(Labeled control) {
-        if (control == null) return;
-        control.setMinHeight(Region.USE_PREF_SIZE);
-        control.setMaxHeight(Region.USE_COMPUTED_SIZE);
-        control.setStyle(appendStyle(control.getStyle(), "-fx-padding: 2 4 2 4;"));
-    }
-
     private String appendStyle(String existingStyle, String styleToAppend) {
         if (existingStyle == null || existingStyle.trim().isEmpty()) {
             return styleToAppend;
@@ -285,11 +264,7 @@ public class PlantsController {
 
     private void initAutoBreedTable() {
         if (tblAutoBreedUsers == null) return;
-        tblAutoBreedUsers.setEditable(true);
         tblAutoBreedUsers.setItems(autoBreedUsers);
-        tblAutoBreedUsers.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblAutoBreedUsers.setFixedCellSize(30.0);
-        tblAutoBreedUsers.setStyle(appendStyle(tblAutoBreedUsers.getStyle(), "-fx-cell-size: 30px;"));
 
         TableColumn<AutoBreedTrustedUser, Boolean> checkedColumn = new TableColumn<>("");
         checkedColumn.setMinWidth(42.0);
@@ -407,18 +382,6 @@ public class PlantsController {
     private void initHelpIcon() {
         try {
             if (btnPetInfoHelp == null) return;
-            btnPetInfoHelp.setGraphic(null);
-            btnPetInfoHelp.setText("(?)");
-            try {
-                btnPetInfoHelp.setStyle("-fx-font-weight: bold; -fx-text-fill: #2b7df6; -fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0; -fx-background-insets: 0; -fx-border-insets: 0; -fx-padding: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
-            } catch (Exception ignored) {}
-
-            try {
-                btnPetInfoHelp.setMinSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
-                btnPetInfoHelp.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
-                btnPetInfoHelp.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
-            } catch (Exception ignored) {}
-
             try {
                 String tip = "When enabled, the extension will request plant (pet) info before treating it.\n" +
                         "This is done to avoid sending treats that shouldn't be sent (e.g. if well being is already very high).";

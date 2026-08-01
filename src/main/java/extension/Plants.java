@@ -2,9 +2,11 @@ package extension;
 
 import extension.entity.AutoBreedTrustedUser;
 import extension.features.PlantManagerFeature;
+import extension.state.FurniDataState;
 import extension.ui.PlantsController;
 import gearth.extensions.ExtensionForm;
 import gearth.extensions.ExtensionInfo;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -53,20 +55,19 @@ public class Plants extends ExtensionForm {
     private Label connectedLbl;
     @FXML
     private Label roomLbl;
+    @FXML
+    private Label furniDataStateLbl;
+    @FXML
+    private CheckBox loadFurniDataOnlyWhenNeeded;
 
     private PlantsController uiController;
     private PlantManagerFeature plantManagerFeature;
+    private FurniDataState furniDataState;
+    private String currentHost;
 
     public void initialize() {
-        uiController = new PlantsController(commandsBox, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers, connectedLbl, roomLbl);
+        uiController = new PlantsController(commandsBox, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, loadFurniDataOnlyWhenNeeded, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers, connectedLbl, roomLbl);
         uiController.initialize();
-    }
-
-    @FXML
-    private void helpPetInfoClick() {
-        if (uiController != null) {
-            uiController.helpPetInfoClick();
-        }
     }
 
     private boolean isAlreadyConnected = false;
@@ -75,15 +76,58 @@ public class Plants extends ExtensionForm {
     protected void initExtension() {
         isAlreadyConnected = getPacketInfoManager() != null && !getPacketInfoManager().getPacketInfoList().isEmpty();
         
+        furniDataState = new FurniDataState(this::updateFurniDataStateLabel);
+
         plantManagerFeature = new PlantManagerFeature(this);
         plantManagerFeature.install();
         plantManagerFeature.setOnStateChanged(this::updateStateLabels);
+
+        onConnect((host, port, hotelversion, clientIdentifier, clientType) -> {
+            currentHost = host;
+            if (loadFurniDataOnlyWhenNeeded != null && !loadFurniDataOnlyWhenNeeded.isSelected()) {
+                furniDataState.load(host);
+            }
+        });
     }
 
     private void updateStateLabels() {
         if (uiController == null) return;
         boolean inRoom = plantManagerFeature.isInitialized();
         uiController.updateRoomState(inRoom);
+    }
+
+    private void updateFurniDataStateLabel(FurniDataState.State state) {
+        if (furniDataStateLbl == null) return;
+        Platform.runLater(() -> {
+            switch (state) {
+                case LOADED:
+                    furniDataStateLbl.setText("Furni Data Loaded");
+                    furniDataStateLbl.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+                    break;
+                case LOADING:
+                    furniDataStateLbl.setText("Loading Furni Data...");
+                    furniDataStateLbl.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+                    break;
+                case UNAVAILABLE:
+                default:
+                    furniDataStateLbl.setText("Furni Data Not Loaded");
+                    furniDataStateLbl.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+                    break;
+            }
+        });
+    }
+
+    @FXML
+    public void onRequestFurniData() {
+        if (currentHost == null || currentHost.length() < 7) {
+            log.warn("[FurniData] Cannot reload furni data: not connected to server");
+            return;
+        }
+        furniDataState.load(currentHost);
+    }
+
+    public FurniDataState getFurniDataState() {
+        return furniDataState;
     }
 
     @FXML
@@ -111,6 +155,10 @@ public class Plants extends ExtensionForm {
         if (plantManagerFeature != null) {
             plantManagerFeature.reset();
         }
+        if (furniDataState != null) {
+            furniDataState.clear();
+        }
+        currentHost = null;
         log.debug("[Connection] Ended");
     }
 }
