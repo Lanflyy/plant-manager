@@ -2,8 +2,9 @@ package extension;
 
 import extension.entity.AutoBreedTrustedUser;
 import extension.features.PlantManagerFeature;
-import extension.state.FurniDataState;
+import extension.state.FurniDataStateHandler;
 import extension.ui.PlantsController;
+import furnidata.FurniDataState;
 import gearth.extensions.ExtensionForm;
 import gearth.extensions.ExtensionInfo;
 import javafx.application.Platform;
@@ -57,16 +58,14 @@ public class Plants extends ExtensionForm {
     private Label roomLbl;
     @FXML
     private Label furniDataStateLbl;
-    @FXML
-    private CheckBox loadFurniDataOnlyWhenNeeded;
 
     private PlantsController uiController;
     private PlantManagerFeature plantManagerFeature;
-    private FurniDataState furniDataState;
+    private FurniDataStateHandler furniDataState;
     private String currentHost;
 
     public void initialize() {
-        uiController = new PlantsController(commandsBox, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, loadFurniDataOnlyWhenNeeded, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers, connectedLbl, roomLbl);
+        uiController = new PlantsController(commandsBox, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers, connectedLbl, roomLbl);
         uiController.initialize();
     }
 
@@ -75,18 +74,17 @@ public class Plants extends ExtensionForm {
     @Override
     protected void initExtension() {
         isAlreadyConnected = getPacketInfoManager() != null && !getPacketInfoManager().getPacketInfoList().isEmpty();
-        
-        furniDataState = new FurniDataState(this::updateFurniDataStateLabel);
+
+        furniDataState = new FurniDataStateHandler(this::updateFurniDataStateLabel);
 
         plantManagerFeature = new PlantManagerFeature(this);
+        plantManagerFeature.setFurniDataStateHandler(furniDataState);
         plantManagerFeature.install();
         plantManagerFeature.setOnStateChanged(this::updateStateLabels);
 
         onConnect((host, port, hotelversion, clientIdentifier, clientType) -> {
             currentHost = host;
-            if (loadFurniDataOnlyWhenNeeded != null && !loadFurniDataOnlyWhenNeeded.isSelected()) {
-                furniDataState.load(host);
-            }
+            furniDataState.load(host);
         });
     }
 
@@ -96,7 +94,7 @@ public class Plants extends ExtensionForm {
         uiController.updateRoomState(inRoom);
     }
 
-    private void updateFurniDataStateLabel(FurniDataState.State state) {
+    private void updateFurniDataStateLabel(FurniDataState state) {
         if (furniDataStateLbl == null) return;
         Platform.runLater(() -> {
             switch (state) {
@@ -104,9 +102,21 @@ public class Plants extends ExtensionForm {
                     furniDataStateLbl.setText("Furni Data Loaded");
                     furniDataStateLbl.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
+                case CACHED:
+                    furniDataStateLbl.setText("Furni Data Cached");
+                    furniDataStateLbl.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+                    break;
+                case CACHED_WITH_REFRESH_ERROR:
+                    furniDataStateLbl.setText("Furni Data Cached (Refresh error)");
+                    furniDataStateLbl.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+                    break;
                 case LOADING:
                     furniDataStateLbl.setText("Loading Furni Data...");
                     furniDataStateLbl.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+                    break;
+                case FAILED:
+                    furniDataStateLbl.setText("Furni Data Failed");
+                    furniDataStateLbl.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
                 case UNAVAILABLE:
                 default:
@@ -126,8 +136,12 @@ public class Plants extends ExtensionForm {
         furniDataState.load(currentHost);
     }
 
-    public FurniDataState getFurniDataState() {
+    public FurniDataStateHandler getFurniDataState() {
         return furniDataState;
+    }
+
+    public String getCurrentHost() {
+        return currentHost;
     }
 
     @FXML
@@ -141,7 +155,7 @@ public class Plants extends ExtensionForm {
     protected void onStartConnection() {
         log.debug("[Connection] Started");
         uiController.updateConnectionState(true);
-        
+
         if (isAlreadyConnected && plantManagerFeature != null) {
             plantManagerFeature.requestInfo();
             isAlreadyConnected = false;

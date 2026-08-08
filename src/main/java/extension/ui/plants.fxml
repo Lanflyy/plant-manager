@@ -180,10 +180,6 @@
                                       style="-fx-font-weight: bold; -fx-text-fill: #2b7df6; -fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0; -fx-background-insets: 0; -fx-border-insets: 0; -fx-padding: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-cursor: hand;" />
                            </children>
                         </HBox>
-                        <CheckBox fx:id="loadFurniDataOnlyWhenNeeded"
-                                  text="Load furni data only when needed"
-                                  minHeight="-Infinity"
-                                  style="-fx-padding: 2 4 2 4;" />
                      </children>
                   </VBox>
 

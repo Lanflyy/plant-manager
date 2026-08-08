@@ -1,6 +1,12 @@
 package extension.features;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.jspecify.annotations.NonNull;
+
 import extension.entity.ACTION_COMMAND_TYPE;
+import extension.state.FurniDataStateHandler;
 import extension.util.NotificationUtils;
 import extension.util.SleepRateLimit;
 import gearth.extensions.ExtensionForm;
@@ -10,32 +16,46 @@ import gearth.protocol.HPacket;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.jspecify.annotations.NonNull;
-
 @Slf4j
 @RequiredArgsConstructor
 public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandler<HFloorItem> {
+
+    private static final String SEED_FURNI_CLASSNAME = "mnstr_seed";
 
     @NonNull
     private final PlantManagerFeature manager;
     @NonNull
     private final BulkItemProcessor processor;
 
-    // Type ID for the plant seed furni as observed in the packet examples
-    private static final int SEED_TYPE_ID = 4284;
+    private int seedTypeId = -1;
 
     @Override
     public void execute() {
         if (manager.getCurrentUserId() == -1 && manager.getCurrentUsername() == null) {
             NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Error: User info not loaded yet. Try again in a moment.");
             log.debug("[Plants] Seed command rejected because user info is missing");
-            // Optionally, request it again
             manager.getExtension().sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER));
             return;
         }
+
+        FurniDataStateHandler furniDataState = manager.getFurniDataStateHandler();
+        if (furniDataState == null) {
+            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Error: Furni data not enabled for this extension.");
+            return;
+        }
+
+        if (!furniDataState.isReady()) {
+            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Furni data is not loaded.");
+            return;
+        }
+
+        Integer resolved = manager.getFloorTypeId(SEED_FURNI_CLASSNAME);
+        if (resolved == null) {
+            log.error("[Plants] Cannot find floor type ID for classname '{}'", SEED_FURNI_CLASSNAME);
+            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Error: Could not find seed type in furni data.");
+            return;
+        }
+        seedTypeId = resolved;
 
         List<HFloorItem> targetSeeds = manager.getFloorItemsSnapshot().stream()
                 .filter(this::shouldProcess)
@@ -48,7 +68,12 @@ public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandl
 
     @Override
     public boolean shouldProcess(HFloorItem item) {
-        if (item.getTypeId() != SEED_TYPE_ID) {
+        if (seedTypeId < 0) {
+            log.warn("[Plants] Seed type ID not resolved, skipping item {}", item.getId());
+            return false;
+        }
+
+        if (item.getTypeId() != seedTypeId) {
             return false;
         }
 
@@ -86,6 +111,7 @@ public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandl
     }
 
 	@Override
+    @NonNull
 	public ACTION_COMMAND_TYPE getActionCommandType() {
 		return ACTION_COMMAND_TYPE.SEED;
 	}

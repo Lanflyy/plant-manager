@@ -4,3 +4,4 @@ org.eclipse.*
 .project
 .classpath
 .settings/
+logs/

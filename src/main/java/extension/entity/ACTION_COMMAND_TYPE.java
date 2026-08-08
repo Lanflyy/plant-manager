@@ -6,10 +6,10 @@ import lombok.Getter;
 public enum ACTION_COMMAND_TYPE {
     TREAT("treated"),
     COMPOST("composted"),
-    ABORT("aborted"),
     SEED("seeded"),
     CAN_REPRODUCE_ON("set to can-reproduce on"),
-    CAN_REPRODUCE_OFF("set to can-reproduce off");
+    CAN_REPRODUCE_OFF("set to can-reproduce off"),
+    ABORT("aborted");
 
     private final String verb;
 

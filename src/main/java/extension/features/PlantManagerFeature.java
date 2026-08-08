@@ -1,5 +1,15 @@
 package extension.features;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import extension.state.FurniDataStateHandler;
+import extension.state.RoomEntityState;
+import extension.state.RoomObjectState;
+import extension.state.SessionState;
+import extension.util.NotificationUtils;
+import extension.util.PlantSettings;
 import gearth.extensions.ExtensionForm;
 import gearth.extensions.parsers.HEntity;
 import gearth.extensions.parsers.HFloorItem;
@@ -7,17 +17,8 @@ import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import extension.state.RoomEntityState;
-import extension.state.RoomObjectState;
-import extension.state.SessionState;
-import extension.util.NotificationUtils;
-import extension.util.PlantSettings;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -45,6 +46,10 @@ public final class PlantManagerFeature {
     private RoomObjectState roomObjectState;
     @Getter
     private SessionState sessionState;
+
+    @Getter
+    @Setter
+    private FurniDataStateHandler furniDataStateHandler;
 
     private BulkItemProcessor processor;
     private AutoBreedFeature autoBreedFeature;
@@ -130,6 +135,24 @@ public final class PlantManagerFeature {
     
     public int getCurrentRoomId() {
         return sessionState != null ? sessionState.getCurrentRoomId() : -1;
+    }
+
+     public Integer getFloorTypeId(String furniName) {
+        if (furniDataStateHandler == null || !furniDataStateHandler.isReady()) {
+            return null;
+        }
+        return furniDataStateHandler.get().getFloorTypeId(furniName);
+    }
+
+    public boolean isFurniDataReady() {
+        return furniDataStateHandler != null && furniDataStateHandler.isReady();
+    }
+
+    public String getCurrentHost() {
+        if (extension instanceof extension.Plants) {
+            return ((extension.Plants) extension).getCurrentHost();
+        }
+        return null;
     }
 
     public void abortProcessingSafe() {

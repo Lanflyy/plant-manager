@@ -40,7 +40,6 @@ public class PlantsController {
     private final ComboBox<String> logLevelCombo;
     private final CheckBox chkRequestPetInfo;
     private final Button btnPetInfoHelp;
-    private final CheckBox loadFurniDataOnlyWhenNeeded;
     private final CheckBox chkAutoBreed;
     private final ComboBox<String> cmbAutoBreedAcceptMode;
     private final CheckBox chkAutoBreedRequireSameOrHigherRarity;
@@ -64,7 +63,6 @@ public class PlantsController {
         ComboBox<String> logLevelCombo,
         CheckBox chkRequestPetInfo,
         Button btnPetInfoHelp,
-        CheckBox loadFurniDataOnlyWhenNeeded,
         CheckBox chkAutoBreed,
         ComboBox<String> cmbAutoBreedAcceptMode,
         CheckBox chkAutoBreedRequireSameOrHigherRarity,
@@ -78,7 +76,6 @@ public class PlantsController {
         this.logLevelCombo = logLevelCombo;
         this.chkRequestPetInfo = chkRequestPetInfo;
         this.btnPetInfoHelp = btnPetInfoHelp;
-        this.loadFurniDataOnlyWhenNeeded = loadFurniDataOnlyWhenNeeded;
         this.chkAutoBreed = chkAutoBreed;
         this.cmbAutoBreedAcceptMode = cmbAutoBreedAcceptMode;
         this.chkAutoBreedRequireSameOrHigherRarity = chkAutoBreedRequireSameOrHigherRarity;
