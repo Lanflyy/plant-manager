@@ -1,21 +1,29 @@
 package extension.ui;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import extension.entity.AutoBreedTrustedUser;
 import extension.util.PlantSettings;
 import gearth.misc.Cacher;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -37,6 +45,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PlantsController {
 
+    private static final String AUTO_BREED_ACCEPT_MODE_TRUSTED_USERS = "Trusted Users only";
+    private static final String AUTO_BREED_ACCEPT_MODE_ANY_USER = "Any user";
+    private static final String LOG_LEVEL_CACHE_KEY = "plants.logLevel";
+    private static final String DEFAULT_LOG_LEVEL = "INFO";
+    private static final URL COPY_ICON_RESOURCE = requireIconResource("/icons/copy_icon.svg");
+    private static final String COPY_ICON_PATH_DATA = loadSvgPathData(COPY_ICON_RESOURCE);
+    private static final ObservableList<String> VALID_LOG_LEVELS = FXCollections.observableArrayList("ERROR", "WARN",
+            "INFO", "DEBUG", "TRACE", "OFF");
     private final ComboBox<String> logLevelCombo;
     private final CheckBox chkRequestPetInfo;
     private final Button btnPetInfoHelp;
@@ -54,23 +70,25 @@ public class PlantsController {
     private final VBox commandsBox;
     private Label connectedLbl;
     private Label roomLbl;
+    private PauseTransition activeCopyResetPause;
+    private Runnable activeCopyReset;
 
     private final PlantsView view;
 
     public PlantsController(
-        VBox commandsBox,
-        TextArea logArea,
-        ComboBox<String> logLevelCombo,
-        CheckBox chkRequestPetInfo,
-        Button btnPetInfoHelp,
-        CheckBox chkAutoBreed,
-        ComboBox<String> cmbAutoBreedAcceptMode,
-        CheckBox chkAutoBreedRequireSameOrHigherRarity,
-        TextField txtAutoBreedUsername,
-        Button btnAutoBreedAdd,
-        Button btnAutoBreedRemove,
-        TableView<AutoBreedTrustedUser> tblAutoBreedUsers,
-        Label connectedLbl,
+            VBox commandsBox,
+            TextArea logArea,
+            ComboBox<String> logLevelCombo,
+            CheckBox chkRequestPetInfo,
+            Button btnPetInfoHelp,
+            CheckBox chkAutoBreed,
+            ComboBox<String> cmbAutoBreedAcceptMode,
+            CheckBox chkAutoBreedRequireSameOrHigherRarity,
+            TextField txtAutoBreedUsername,
+            Button btnAutoBreedAdd,
+            Button btnAutoBreedRemove,
+            TableView<AutoBreedTrustedUser> tblAutoBreedUsers,
+            Label connectedLbl,
         Label roomLbl
     ) {
         this.logLevelCombo = logLevelCombo;
@@ -129,8 +147,8 @@ public class PlantsController {
         HBox row = new HBox(4.0);
         row.setAlignment(Pos.CENTER_LEFT);
         row.setStyle(index % 2 == 0
-            ? "-fx-padding: 1 6;"
-            : "-fx-background-color: rgba(127,127,127,0.15); -fx-padding: 1 6;");
+                ? "-fx-padding: 1 6;"
+                : "-fx-background-color: rgba(127,127,127,0.15); -fx-padding: 1 6;");
 
         javafx.scene.control.TextField commandField = new javafx.scene.control.TextField(command);
         commandField.setEditable(false);
@@ -138,11 +156,91 @@ public class PlantsController {
         commandField.setMaxHeight(Double.MAX_VALUE);
         commandField.setStyle("-fx-font-size: 12px; -fx-font-family: monospace; -fx-background-color: transparent; -fx-border-color: transparent; -fx-background-insets: 0; -fx-padding: 0 0 0 6;");
 
+        String baseButtonStyle = "-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0; -fx-background-insets: 0; -fx-border-insets: 0; -fx-padding: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent; -fx-cursor: hand;";
+
+        Button copyButton = new Button();
+        javafx.scene.shape.SVGPath copyIcon = createCopyIcon();
+        copyIcon.setFill(javafx.scene.paint.Color.web("#2b7df6"));
+        copyIcon.setScaleX(0.6);
+        copyIcon.setScaleY(0.6);
+        copyButton.setGraphic(copyIcon);
+        copyButton.setStyle(baseButtonStyle);
+        copyButton.setMinSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+        copyButton.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+        copyButton.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+
         Button helpButton = new Button("(?)");
-        helpButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #2b7df6; -fx-font-weight: bold; -fx-border-color: transparent; -fx-cursor: hand; -fx-padding: 0;");
+        helpButton.setStyle("-fx-text-fill: #2b7df6; -fx-font-weight: bold; " + baseButtonStyle);
         helpButton.setMinSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
         helpButton.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
         helpButton.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+
+        Label copiedLabel = new Label("(copied)");
+        copiedLabel.setStyle("-fx-text-fill: #2ecc71; -fx-font-size: 11px; -fx-font-weight: bold;");
+        copiedLabel.setVisible(false);
+
+        Runnable updateHighlight = () -> {
+            boolean highlight = row.isHover() || commandField.isFocused();
+            if (highlight) {
+                commandField.setStyle(
+                        "-fx-font-size: 12px; -fx-font-family: monospace; -fx-background-color: transparent; -fx-border-color: #2b7df6; -fx-border-radius: 3; -fx-background-insets: 0; -fx-padding: 0 0 0 6;");
+            } else {
+                commandField.setStyle(
+                        "-fx-font-size: 12px; -fx-font-family: monospace; -fx-background-color: transparent; -fx-border-color: transparent; -fx-background-insets: 0; -fx-padding: 0 0 0 6;");
+            }
+        };
+
+        row.hoverProperty().addListener((obs, oldVal, newVal) -> updateHighlight.run());
+        commandField.focusedProperty().addListener((obs, oldVal, newVal) -> updateHighlight.run());
+
+        boolean[] clickedOnce = { false };
+
+        PauseTransition copyResetPause = new PauseTransition(javafx.util.Duration.seconds(1));
+        Runnable resetCopyFeedback = () -> {
+            copyButton.setText("");
+            copyButton.setGraphic(copyIcon);
+            copyButton.setStyle(baseButtonStyle);
+            copiedLabel.setVisible(false);
+            clickedOnce[0] = false;
+            if (activeCopyResetPause == copyResetPause) {
+                activeCopyResetPause = null;
+                activeCopyReset = null;
+            }
+        };
+        copyResetPause.setOnFinished(ev -> resetCopyFeedback.run());
+
+        Runnable doCopy = () -> {
+            if (activeCopyResetPause != null) {
+                activeCopyResetPause.stop();
+            }
+            if (activeCopyReset != null) {
+                activeCopyReset.run();
+            }
+            copyResetPause.stop();
+            javafx.scene.input.Clipboard clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
+            javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+            content.putString(command);
+            clipboard.setContent(content);
+
+            copyButton.setGraphic(null);
+            copyButton.setText("✓");
+            copyButton.setStyle("-fx-text-fill: #2ecc71; -fx-font-weight: bold; " + baseButtonStyle);
+            copiedLabel.setVisible(true);
+            activeCopyResetPause = copyResetPause;
+            activeCopyReset = resetCopyFeedback;
+            copyResetPause.playFromStart();
+        };
+
+        copyButton.setOnAction(e -> doCopy.run());
+
+        Tooltip copyTooltip = new Tooltip("Copy command");
+        copyButton.setOnMouseEntered(e -> {
+            if (!copyTooltip.isShowing()) {
+                Point2D p = copyButton.localToScreen(0, copyButton.getHeight());
+                copyTooltip.show(copyButton, p.getX() + 8.0, p.getY() + 6.0);
+            }
+        });
+        copyButton.setOnMouseExited(e -> copyTooltip.hide());
 
         Tooltip tooltip = new Tooltip(description);
         helpButton.setOnMouseEntered(e -> {
@@ -152,6 +250,22 @@ public class PlantsController {
             }
         });
         helpButton.setOnMouseExited(e -> tooltip.hide());
+
+        row.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
+            Node target = (Node) e.getTarget();
+            boolean isButton = false;
+            while (target != null && target != row) {
+                if (target instanceof Button) {
+                    isButton = true;
+                    break;
+                }
+                target = target.getParent();
+            }
+            if (!clickedOnce[0] && !isButton) {
+                clickedOnce[0] = true;
+                doCopy.run();
+            }
+        });
 
         EventHandler<MouseEvent> mouseHandler = e -> {
             if (e.getTarget() == row) {
@@ -176,7 +290,7 @@ public class PlantsController {
         row.setOnMousePressed(mouseHandler);
         row.setOnMouseDragged(mouseHandler);
 
-        row.getChildren().addAll(commandField, helpButton);
+        row.getChildren().addAll(commandField, copyButton, helpButton, copiedLabel);
         return row;
     }
 
@@ -185,10 +299,49 @@ public class PlantsController {
             if (connectedLbl != null) {
                 connectedLbl.setText(connected ? "Connected" : "Not connected");
                 connectedLbl.setStyle(connected
-                    ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
-                    : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+                        ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
+                        : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
             }
         });
+    }
+
+    private static javafx.scene.shape.SVGPath createCopyIcon() {
+        javafx.scene.shape.SVGPath icon = new javafx.scene.shape.SVGPath();
+        icon.setContent(COPY_ICON_PATH_DATA);
+        return icon;
+    }
+
+    private static URL requireIconResource(String resourcePath) {
+        URL resource = PlantsController.class.getResource(resourcePath);
+        if (resource == null) {
+            throw new IllegalStateException("Missing icon resource: " + resourcePath);
+        }
+        return resource;
+    }
+
+    private static String loadSvgPathData(URL resource) {
+        try (InputStream input = resource.openStream()) {
+            NodeList paths = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder()
+                    .parse(input)
+                    .getElementsByTagName("path");
+            StringBuilder pathData = new StringBuilder();
+            for (int i = 0; i < paths.getLength(); i++) {
+                String path = ((Element) paths.item(i)).getAttribute("d").trim();
+                if (!path.isEmpty()) {
+                    if (pathData.length() > 0) {
+                        pathData.append(' ');
+                    }
+                    pathData.append(path);
+                }
+            }
+            if (pathData.length() == 0) {
+                throw new IllegalStateException("Icon contains no SVG path: " + resource);
+            }
+            return pathData.toString();
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not load SVG icon: " + resource, e);
+        }
     }
 
     public void updateRoomState(boolean inRoom) {
@@ -196,8 +349,8 @@ public class PlantsController {
             if (roomLbl != null) {
                 roomLbl.setText(inRoom ? "Room Loaded" : "Room Not Loaded");
                 roomLbl.setStyle(inRoom
-                    ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
-                    : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+                        ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
+                        : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
             }
         });
     }
@@ -218,8 +371,6 @@ public class PlantsController {
         }
         return existingStyle.endsWith(";") ? existingStyle + " " + styleToAppend : existingStyle + "; " + styleToAppend;
     }
-    private static final String AUTO_BREED_ACCEPT_MODE_TRUSTED_USERS = "Trusted Users only";
-    private static final String AUTO_BREED_ACCEPT_MODE_ANY_USER = "Any user";
 
     private void initAutoBreedControls() {
         try {
@@ -393,7 +544,7 @@ public class PlantsController {
                         ttPetInfoHelp.show(btnPetInfoHelp, p.getX() + offsetX, p.getY() + offsetY);
                     }
                 });
-                
+
                 btnPetInfoHelp.setOnMouseExited(e -> {
                     if (ttPetInfoHelp != null) {
                         ttPetInfoHelp.hide();
@@ -404,11 +555,6 @@ public class PlantsController {
             log.debug("Failed to initialize help button", e);
         }
     }
-
-    private static final String LOG_LEVEL_CACHE_KEY = "plants.logLevel";
-    private static final String DEFAULT_LOG_LEVEL = "INFO";
-    private static final ObservableList<String> VALID_LOG_LEVELS =
-            FXCollections.observableArrayList("ERROR", "WARN", "INFO", "DEBUG", "TRACE", "OFF");
 
     private void initLogLevelControl() {
         try {
@@ -460,6 +606,3 @@ public class PlantsController {
         view.clearLogs();
     }
 }
-
-
-
