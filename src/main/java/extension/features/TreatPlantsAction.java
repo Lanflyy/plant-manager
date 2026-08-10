@@ -125,6 +125,7 @@ public class TreatPlantsAction implements UserActionExecutor, ItemProcessingHand
             CompletableFuture<PetInfoEntity> future = petInfoRequests.remove(info.getPetId());
             if (future != null) {
                 future.complete(info);
+                hMessage.setBlocked(true);
             } else {
                 log.trace("[PetInfo] Received PetInfo for {} but no pending request", info.getPetId());
             }
