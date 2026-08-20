@@ -1,11 +1,14 @@
 package furnidata;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.apache.commons.io.FileUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,30 +17,43 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import extension.TestLoggerLifecycleExtension;
-import furnidata.FurniDataState;
 import gearth.misc.Cacher;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Isolated
+@Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(TestLoggerLifecycleExtension.class)
 class FurniDataToolsTest {
 
-    @TempDir
-    static File tempCacheDir;
-
-    private static String testFurniJson;
+    private static final File TEST_OUTPUT_DIR = new File("target/test/output");
 
     @BeforeAll
     public static void setUpStatic() {
-        Cacher.setCacheDir(tempCacheDir.getAbsolutePath());
-        testFurniJson = createTestFurniJson();
+        try {
+            FileUtils.deleteDirectory(TEST_OUTPUT_DIR);
+        } catch (IOException ignored) {}
+        TEST_OUTPUT_DIR.mkdirs();
+        Cacher.setCacheDir(TEST_OUTPUT_DIR.getAbsolutePath());
+        log.info("[TEST] Cache directory set to: {}", TEST_OUTPUT_DIR.getAbsolutePath());
+        log.info("[TEST] Intermediary test artifacts (furnidata cache files) will be stored in: {}", TEST_OUTPUT_DIR.getAbsolutePath());
     }
 
-    private static String createTestFurniJson() {
-        org.json.JSONArray floorTypes = new org.json.JSONArray();
+    private static String readFileContents(File file) throws Exception {
+        byte[] bytes = new byte[(int) file.length()];
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+            fis.read(bytes);
+        }
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private static String createTestFurniJson(String countryCode) {
+        JSONArray floorTypes = new JSONArray();
         JSONObject floorType = new JSONObject();
         floorType.put("classname", "mnstr_seed");
         floorType.put("id", 4284);
@@ -60,7 +76,7 @@ class FurniDataToolsTest {
         floorType.put("customparams", "");
         floorTypes.put(floorType);
 
-        org.json.JSONArray wallTypes = new org.json.JSONArray();
+        JSONArray wallTypes = new JSONArray();
         JSONObject wallType = new JSONObject();
         wallType.put("classname", "post_it");
         wallType.put("id", 4213);
@@ -88,42 +104,6 @@ class FurniDataToolsTest {
         return root.toString();
     }
 
-    private static String readFileContents(File file) throws Exception {
-        byte[] bytes = new byte[(int) file.length()];
-        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
-            fis.read(bytes);
-        }
-        return new String(bytes, StandardCharsets.UTF_8);
-    }
-
-    private static String fetchCurrentHash(String countryCode) throws Exception {
-        java.util.Map<String, String> domainMap = new java.util.HashMap<>();
-        domainMap.put("br", ".com.br");
-        domainMap.put("de", ".de");
-        domainMap.put("es", ".es");
-        domainMap.put("fi", ".fi");
-        domainMap.put("fr", ".fr");
-        domainMap.put("it", ".it");
-        domainMap.put("nl", ".nl");
-        domainMap.put("tr", ".com.tr");
-        domainMap.put("us", ".com");
-
-        String baseUrl = "https://www.habbo" + domainMap.get(countryCode) + "/gamedata/furnidata_json/1";
-        java.net.URL url = new java.net.URL(baseUrl);
-        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-        conn.setInstanceFollowRedirects(false);
-        conn.setRequestMethod("GET");
-        int responseCode = conn.getResponseCode();
-        if (responseCode == 301 || responseCode == 302 || responseCode == 307 || responseCode == 308) {
-            String location = conn.getHeaderField("Location");
-            if (location != null) {
-                String[] parts = location.split("/");
-                return parts[parts.length - 1];
-            }
-        }
-        return null;
-    }
-
     @Test
     void testLoadFurniDataNormallyWithoutCache(TestInfo testInfo) throws Exception {
         log.info("[TEST] Running: {}", testInfo.getDisplayName());
@@ -131,7 +111,9 @@ class FurniDataToolsTest {
         CompletableFuture<FurniDataState> resultFuture = new CompletableFuture<>();
         Consumer<FurniDataState> callback = resultFuture::complete;
 
-        FurniDataTools tools = new FurniDataTools("game-us.habbo.com", callback);
+        final String host = "game-us.habbo.com";
+        final String countryCode = FurniDataUtils.hostToCountryCode(host);
+        FurniDataTools tools = new FurniDataTools(host, callback);
 
         try {
             FurniDataState result = resultFuture.get(10, TimeUnit.SECONDS);
@@ -141,10 +123,10 @@ class FurniDataToolsTest {
             Integer seedTypeId = tools.getFloorTypeId("mnstr_seed");
             assertNotNull(seedTypeId, "mnstr_seed type ID should be resolved from URL data");
 
-            File cacheFile = new File(Cacher.getCacheDir(), "furnidata_us_cache.json");
+            File cacheFile = new File(Cacher.getCacheDir(), FurniDataUtils.getCacheFilename(countryCode));
             assertTrue(cacheFile.exists(), "Cache file should be created after loading from URL");
 
-            Object hash = Cacher.get("plants.furnidataHash_us");
+            Object hash = Cacher.get(FurniDataUtils.getHashCacheKey(countryCode));
             assertNotNull(hash, "FurniDataTools should store a hash in cache after loading from URL");
             assertNotNull(hash.toString(), "Hash should not be null");
             assertTrue(hash.toString().length() > 0, "Hash should not be empty");
@@ -160,17 +142,20 @@ class FurniDataToolsTest {
     void testLoadFromCacheReturnsSmallHttpResponse(TestInfo testInfo) throws Exception {
         log.info("[TEST] Running: {}", testInfo.getDisplayName());
 
+        final String countryCode = "fr";
+        final String host = "game-" + countryCode + ".habbo.com";
+
         // Set up cache with test data
-        Cacher.updateCache(testFurniJson, "furnidata_fr_cache.json");
+        Cacher.updateCache(createTestFurniJson(countryCode), FurniDataUtils.getCacheFilename(countryCode));
 
         // Fetch the current hash from the server's redirect
-        String currentHash = fetchCurrentHash("fr");
+        String currentHash = FurniDataUtils.fetchCurrentHash(host);
         assertNotNull(currentHash, "Should be able to fetch hash from server redirect");
 
         // Store the matching hash in cache
-        Cacher.put("plants.furnidataHash_fr", currentHash);
+        Cacher.put(FurniDataUtils.getHashCacheKey(countryCode), currentHash);
 
-        File cacheFile = new File(Cacher.getCacheDir(), "furnidata_fr_cache.json");
+        File cacheFile = new File(Cacher.getCacheDir(), FurniDataUtils.getCacheFilename(countryCode));
         assertTrue(cacheFile.exists(), "Cache file should exist before load");
 
         String content = readFileContents(cacheFile);
@@ -188,7 +173,7 @@ class FurniDataToolsTest {
         CompletableFuture<FurniDataState> resultFuture = new CompletableFuture<>();
         Consumer<FurniDataState> callback = resultFuture::complete;
 
-        FurniDataTools tools = new FurniDataTools("game-fr.habbo.com", callback);
+        FurniDataTools tools = new FurniDataTools(host, callback);
 
         try {
             Integer seedTypeId = tools.getFloorTypeId("mnstr_seed");
@@ -196,8 +181,9 @@ class FurniDataToolsTest {
 
             FurniDataState result = resultFuture.get(10, TimeUnit.SECONDS);
             assertNotNull(result, "LoadResult callback should have been called");
-            assertEquals(FurniDataState.CACHED, result, "Load result must be CACHED (hash matches)");
+            assertEquals(FurniDataState.CACHED, result, "Load result must be Cache Hit (hash matches)");
             log.info("[TEST] {} - Load result: {}", testInfo.getDisplayName(), result);
+            log.info("[TEST] {} - Cache Hit confirmed (cached data used without full download)", testInfo.getDisplayName());
         } finally {
             tools = null;
         }
@@ -207,9 +193,11 @@ class FurniDataToolsTest {
     void testCacheFileContainsCorrectData(TestInfo testInfo) throws Exception {
         log.info("[TEST] Running: {}", testInfo.getDisplayName());
 
-        Cacher.updateCache(testFurniJson, "furnidata_de_cache.json");
+        final String countryCode = "de";
 
-        File cacheFile = new File(Cacher.getCacheDir(), "furnidata_de_cache.json");
+        Cacher.updateCache(createTestFurniJson(countryCode), FurniDataUtils.getCacheFilename(countryCode));
+
+        File cacheFile = new File(Cacher.getCacheDir(), FurniDataUtils.getCacheFilename(countryCode));
         assertTrue(cacheFile.exists(), "Cache file should exist");
 
         String content = readFileContents(cacheFile);

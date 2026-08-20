@@ -12,33 +12,19 @@ import java.util.function.Consumer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import furnidata.details.FloorItemDetails;
 import furnidata.details.WallItemDetails;
-import furnidata.FurniDataState;
 import gearth.misc.Cacher;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class FurniDataTools {
 
-    private static final Map<String, String> codeToDomainMap = new HashMap<>();
-    static {
-        codeToDomainMap.put("br", ".com.br");
-        codeToDomainMap.put("de", ".de");
-        codeToDomainMap.put("es", ".es");
-        codeToDomainMap.put("fi", ".fi");
-        codeToDomainMap.put("fr", ".fr");
-        codeToDomainMap.put("it", ".it");
-        codeToDomainMap.put("nl", ".nl");
-        codeToDomainMap.put("tr", ".com.tr");
-        codeToDomainMap.put("us", ".com");
-    }
-
-    private static final String FURNIDATA_PREFIX = "plants.";
-
     private final String countryCode;
+    private final String host;
     private final String cacheFilename;
     private volatile boolean isReady = false;
 
@@ -51,16 +37,22 @@ public class FurniDataTools {
     private final Map<String, WallItemDetails> nameToWallItems = new HashMap<>();
 
     public FurniDataTools(String host, Consumer<FurniDataState> onLoadListener) {
-        countryCode = host.substring(5, 7);
-        cacheFilename = "furnidata_" + countryCode + "_cache.json";
+        this(host, onLoadListener, false);
+    }
+
+    public FurniDataTools(String host, Consumer<FurniDataState> onLoadListener, boolean forceRefresh) {
+        this.host = host;
+        countryCode = FurniDataUtils.hostToCountryCode(host);
+        cacheFilename = FurniDataUtils.getCacheFilename(countryCode);
 
         boolean parsedFromCache = tryLoadFromCache();
         String cachedHash = getCachedHash();
+        boolean cacheFresh = isCacheFresh();
         Consumer<FurniDataState> listener = onLoadListener;
 
         new Thread(() -> {
             try {
-                fetch(listener, parsedFromCache, cachedHash);
+                fetch(listener, parsedFromCache, cachedHash, cacheFresh, forceRefresh);
             } catch (IOException e) {
                 log.error("[FurniData] Failed to fetch furnidata for host: {}", host, e);
                 if (parsedFromCache && listener != null) {
@@ -86,7 +78,7 @@ public class FurniDataTools {
             parseJson(object);
             log.debug("[FurniData] Loaded furni data from cache file: {}", cacheFilename);
             return true;
-        } catch (Exception e) {
+        } catch (IOException | JSONException e) {
             log.warn("[FurniData] Failed to load cache file {}, will fetch from URL", cacheFilename, e);
             nameToTypeidFloor.clear();
             nameToTypeidWall.clear();
@@ -126,7 +118,7 @@ public class FurniDataTools {
     }
 
     private String getFurniDataHashKey() {
-        return FURNIDATA_PREFIX + "furnidataHash_" + countryCode;
+        return FurniDataUtils.getHashCacheKey(countryCode);
     }
 
     private String getCachedHash() {
@@ -150,40 +142,91 @@ public class FurniDataTools {
         }
     }
 
-    private String extractHashFromUrl(String locationUrl) {
-        String[] parts = locationUrl.split("/");
-        return parts[parts.length - 1];
+    private Long getCachedTimestamp() {
+        try {
+            Object val = Cacher.get(FurniDataUtils.getTimestampCacheKey(countryCode));
+            if (val != null) {
+                return Long.valueOf(val.toString());
+            }
+        } catch (NumberFormatException e) {
+            log.warn("[FurniData] Failed to read timestamp from cache", e);
+        }
+        return null;
     }
 
-    private void fetch(Consumer<FurniDataState> onLoad, boolean wasCached, String cachedHash) throws IOException {
-        if (wasCached && cachedHash != null) {
-            log.debug("[FurniData] Checking if hash {} matches cached hash for {}", cachedHash, countryCode);
-            String baseUrl = furnidataUrl();
-            URL url = new URL(baseUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setInstanceFollowRedirects(false);
-            conn.setRequestMethod("GET");
+    private Integer getCachedMaxAgeSeconds() {
+        try {
+            Object val = Cacher.get(FurniDataUtils.getMaxAgeCacheKey(countryCode));
+            if (val != null) {
+                return Integer.valueOf(val.toString());
+            }
+        } catch (NumberFormatException e) {
+            log.warn("[FurniData] Failed to read max-age from cache", e);
+        }
+        return null;
+    }
 
-            int responseCode = conn.getResponseCode();
+    private void storeCacheTimestampAndMaxAge(long timestamp, int maxAgeSeconds) {
+        try {
+            Cacher.put(FurniDataUtils.getTimestampCacheKey(countryCode), String.valueOf(timestamp));
+            Cacher.put(FurniDataUtils.getMaxAgeCacheKey(countryCode), String.valueOf(maxAgeSeconds));
+        } catch (Exception e) {
+            log.warn("[FurniData] Failed to store cache timestamp/max-age", e);
+        }
+    }
 
-            if (responseCode >= 300 && responseCode < 400) {
-                String location = conn.getHeaderField("Location");
-                if (location != null) {
-                    String freshHash = extractHashFromUrl(location);
-                    if (freshHash.equals(cachedHash)) {
-                        log.debug("[FurniData] Hash matches ({}), using cached data without full download", freshHash);
-                        isReady = true;
-                        onLoad.accept(FurniDataState.CACHED);
-                        return;
-                    } else {
-                        log.debug("[FurniData] Hash differs (cached={}, fresh={}), fetching full data", cachedHash, freshHash);
-                    }
+    private void updateFreshness() {
+        Integer maxAgeInt = getCachedMaxAgeSeconds();
+        int maxAge = maxAgeInt != null ? maxAgeInt : FurniDataUtils.DEFAULT_CACHE_MAX_AGE_SECONDS;
+        storeCacheTimestampAndMaxAge(System.currentTimeMillis(), maxAge);
+    }
+
+    private boolean isCacheFresh() {
+        Long timestamp = getCachedTimestamp();
+        if (timestamp == null) return false;
+        Integer maxAge = getCachedMaxAgeSeconds();
+        if (maxAge == null) return false;
+        return System.currentTimeMillis() - timestamp < maxAge * 1000L;
+    }
+
+    private String furnidataUrl() {
+        return FurniDataUtils.furnidataUrl(host);
+    }
+
+    private void fetch(Consumer<FurniDataState> onLoad, boolean wasCached, String cachedHash, boolean cacheFresh, boolean forceRefresh) throws IOException {
+        if (!forceRefresh && cacheFresh) {
+            log.debug("[FurniData] Cache Hit - cache is fresh (within max-age), using cached data");
+            isReady = true;
+            onLoad.accept(FurniDataState.CACHED);
+            return;
+        }
+
+        if (!forceRefresh && wasCached && cachedHash != null) {
+            String freshHash = FurniDataUtils.fetchCurrentHash(host);
+            if (freshHash != null) {
+                storeCachedHash(freshHash);
+                if (freshHash.equals(cachedHash)) {
+                    updateFreshness();
+                    log.debug("[FurniData] Cache Hit - hash matches ({}), using cached data without full download", freshHash);
+                    isReady = true;
+                    onLoad.accept(FurniDataState.CACHED);
+                    return;
                 }
-            } else if (responseCode != HttpURLConnection.HTTP_OK) {
-                throw new IOException("HTTP " + responseCode + " when checking furnidata redirect for " + countryCode);
+                log.debug("[FurniData] Hash differs (cached={}, fresh={}), downloading full data", cachedHash, freshHash);
+            } else {
+                log.warn("[FurniData] Failed to fetch hash from server, falling back to cache");
+                if (wasCached) {
+                    isReady = true;
+                    onLoad.accept(FurniDataState.CACHED_WITH_REFRESH_ERROR);
+                }
+                return;
             }
         }
 
+        downloadFullData(onLoad, wasCached);
+    }
+
+    private void downloadFullData(Consumer<FurniDataState> onLoad, boolean wasCached) throws IOException {
         String urlStr = furnidataUrl();
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -192,7 +235,8 @@ public class FurniDataTools {
         int responseCode = conn.getResponseCode();
 
         if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
-            log.debug("[FurniData] HTTP 304 Not Modified, using cached data");
+            log.debug("[FurniData] Cache Hit - HTTP 304 Not Modified, using cached data");
+            updateFreshness();
             isReady = true;
             onLoad.accept(FurniDataState.CACHED);
             return;
@@ -215,19 +259,15 @@ public class FurniDataTools {
         storeCache(content);
 
         String finalUrl = conn.getURL().toString();
-        String hash = extractHashFromUrl(finalUrl);
+        String hash = FurniDataUtils.extractHashFromUrl(finalUrl);
         storeCachedHash(hash);
+
+        String cacheControl = conn.getHeaderField("Cache-Control");
+        int maxAgeSeconds = FurniDataUtils.parseMaxAgeSeconds(cacheControl);
+        storeCacheTimestampAndMaxAge(System.currentTimeMillis(), maxAgeSeconds);
 
         isReady = true;
         onLoad.accept(FurniDataState.LOADED);
-    }
-
-    private String furnidataUrl() {
-        if (countryCode.equals("s2")) {
-            return "https://sandbox.habbo.com/gamedata/furnidata_json/1";
-        }
-
-        return String.format("https://www.habbo%s/gamedata/furnidata_json/1", codeToDomainMap.get(countryCode));
     }
 
     public boolean isReady() {

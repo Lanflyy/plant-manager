@@ -31,12 +31,20 @@ public class FurniDataStateHandler {
     }
 
     public void load(String host) {
+        loadInternal(host, false);
+    }
+
+    public void reload(String host) {
+        loadInternal(host, true);
+    }
+
+    private void loadInternal(String host, boolean forceRefresh) {
         if (host == null || host.length() < 7) return;
 
         updateState(FurniDataState.LOADING);
         furniDataTools = null;
 
-        log.debug("[FurniData] Loading furni data for host: {}", host);
+        log.info("[FurniData] {} furni data for host: {}", forceRefresh ? "Reloading" : "Loading", host);
         furniDataTools = new FurniDataTools(host, result -> {
             if (result == null) {
                 log.error("[FurniData] Retrieved unexpected load result as null.");
@@ -45,19 +53,19 @@ public class FurniDataStateHandler {
             }
             switch (result) {
                 case LOADED:
-                    log.debug("[FurniData] Load completed successfully from URL");
+                    log.info("[FurniData] Load completed successfully from URL");
                     updateState(FurniDataState.LOADED);
                     break;
                 case CACHED:
-                    log.debug("[FurniData] Load completed from cache (hash matched)");
+                    log.info("[FurniData] Cache Hit - using cached data without full download");
                     updateState(FurniDataState.CACHED);
                     break;
                 case CACHED_WITH_REFRESH_ERROR:
-                    log.info("[FurniData] Load completed from cache (refresh from URL failed)");
+                    log.warn("[FurniData] Cache Hit (refresh from URL failed), using cached data as fallback");
                     updateState(FurniDataState.CACHED_WITH_REFRESH_ERROR);
                     break;
                 case FAILED:
-                    log.warn("[FurniData] Load failed (no cache available)");
+                    log.error("[FurniData] Load failed and no cache was available to fallback to");
                     updateState(FurniDataState.FAILED);
                     break;
                 case UNAVAILABLE:
@@ -66,13 +74,13 @@ public class FurniDataStateHandler {
                     updateState(FurniDataState.UNAVAILABLE);
                     break;
             }
-        });
+        }, forceRefresh);
     }
 
     public void clear() {
         furniDataTools = null;
         updateState(FurniDataState.UNAVAILABLE);
-        log.debug("[FurniData] Cleared");
+        log.info("[FurniData] Cleared");
     }
 
     private void updateState(FurniDataState newState) {

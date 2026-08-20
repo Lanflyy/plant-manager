@@ -103,11 +103,11 @@ public class Plants extends ExtensionForm {
                     furniDataStateLbl.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
                 case CACHED:
-                    furniDataStateLbl.setText("Furni Data Cached");
+                    furniDataStateLbl.setText("Furni Data Cache Hit");
                     furniDataStateLbl.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
                 case CACHED_WITH_REFRESH_ERROR:
-                    furniDataStateLbl.setText("Furni Data Cached (Refresh error)");
+                    furniDataStateLbl.setText("Furni Data Cache Hit (Refresh error)");
                     furniDataStateLbl.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
                 case LOADING:
@@ -133,7 +133,7 @@ public class Plants extends ExtensionForm {
             log.warn("[FurniData] Cannot reload furni data: not connected to server");
             return;
         }
-        furniDataState.load(currentHost);
+        furniDataState.reload(currentHost);
     }
 
     public FurniDataStateHandler getFurniDataState() {
