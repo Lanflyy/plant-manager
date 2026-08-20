@@ -201,7 +201,7 @@ public class FurniDataTools {
             return;
         }
 
-        if (!forceRefresh && wasCached && cachedHash != null) {
+        if (wasCached && cachedHash != null) {
             String freshHash = FurniDataUtils.fetchCurrentHash(host);
             if (freshHash != null) {
                 storeCachedHash(freshHash);
