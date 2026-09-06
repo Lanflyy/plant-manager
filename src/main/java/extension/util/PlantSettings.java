@@ -1,16 +1,15 @@
 package extension.util;
 
-import extension.entity.AutoBreedTrustedUser;
-import gearth.extensions.parsers.HEntity;
-import gearth.extensions.parsers.HEntityType;
-import gearth.misc.Cacher;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import extension.entity.AutoBreedTrustedUser;
+import gearth.extensions.parsers.HEntity;
+import gearth.extensions.parsers.HEntityType;
 
 /**
  * Simple runtime settings holder for the Plants extension.
@@ -41,7 +40,7 @@ public final class PlantSettings {
     public static void setRequestPetInfoBeforeTreat(boolean v) {
         ensureSettingsLoaded();
         REQUEST_PET_INFO_BEFORE_TREAT = v;
-        Cacher.put(REQUEST_PET_INFO_BEFORE_TREAT_CACHE_KEY, v);
+        PreferenceCacher.put(REQUEST_PET_INFO_BEFORE_TREAT_CACHE_KEY, v);
     }
 
     public static boolean isAutoBreedEnabled() {
@@ -52,7 +51,7 @@ public final class PlantSettings {
     public static void setAutoBreedEnabled(boolean v) {
         ensureSettingsLoaded();
         AUTO_BREED_ENABLED = v;
-        Cacher.put(AUTO_BREED_ENABLED_CACHE_KEY, v);
+        PreferenceCacher.put(AUTO_BREED_ENABLED_CACHE_KEY, v);
         notifyAutoBreedListeners();
     }
 
@@ -64,7 +63,7 @@ public final class PlantSettings {
     public static void setAutoBreedAcceptAllUsers(boolean v) {
         ensureSettingsLoaded();
         AUTO_BREED_ACCEPT_ALL_USERS = v;
-        Cacher.put(AUTO_BREED_ACCEPT_ALL_USERS_CACHE_KEY, v);
+        PreferenceCacher.put(AUTO_BREED_ACCEPT_ALL_USERS_CACHE_KEY, v);
         notifyAutoBreedListeners();
     }
 
@@ -76,7 +75,7 @@ public final class PlantSettings {
     public static void setAutoBreedRequireSameOrHigherRarity(boolean v) {
         ensureSettingsLoaded();
         AUTO_BREED_REQUIRE_SAME_OR_HIGHER_RARITY = v;
-        Cacher.put(AUTO_BREED_REQUIRE_SAME_OR_HIGHER_RARITY_CACHE_KEY, v);
+        PreferenceCacher.put(AUTO_BREED_REQUIRE_SAME_OR_HIGHER_RARITY_CACHE_KEY, v);
         notifyAutoBreedListeners();
     }
 
@@ -227,27 +226,27 @@ public final class PlantSettings {
         synchronized (PlantSettings.class) {
             if (SETTINGS_LOADED) return;
             try {
-                Object requestPetInfo = Cacher.get(REQUEST_PET_INFO_BEFORE_TREAT_CACHE_KEY);
+                Object requestPetInfo = PreferenceCacher.get(REQUEST_PET_INFO_BEFORE_TREAT_CACHE_KEY);
                 if (requestPetInfo instanceof Boolean) {
                     REQUEST_PET_INFO_BEFORE_TREAT = (Boolean) requestPetInfo;
                 }
 
-                Object enabled = Cacher.get(AUTO_BREED_ENABLED_CACHE_KEY);
+                Object enabled = PreferenceCacher.get(AUTO_BREED_ENABLED_CACHE_KEY);
                 if (enabled instanceof Boolean) {
                     AUTO_BREED_ENABLED = (Boolean) enabled;
                 }
 
-                Object acceptAllUsers = Cacher.get(AUTO_BREED_ACCEPT_ALL_USERS_CACHE_KEY);
+                Object acceptAllUsers = PreferenceCacher.get(AUTO_BREED_ACCEPT_ALL_USERS_CACHE_KEY);
                 if (acceptAllUsers instanceof Boolean) {
                     AUTO_BREED_ACCEPT_ALL_USERS = (Boolean) acceptAllUsers;
                 }
 
-                Object requireRarity = Cacher.get(AUTO_BREED_REQUIRE_SAME_OR_HIGHER_RARITY_CACHE_KEY);
+                Object requireRarity = PreferenceCacher.get(AUTO_BREED_REQUIRE_SAME_OR_HIGHER_RARITY_CACHE_KEY);
                 if (requireRarity instanceof Boolean) {
                     AUTO_BREED_REQUIRE_SAME_OR_HIGHER_RARITY = (Boolean) requireRarity;
                 }
 
-                List<Object> trustedUsers = Cacher.getList(AUTO_BREED_TRUSTED_USERS_CACHE_KEY);
+                List<Object> trustedUsers = PreferenceCacher.getList(AUTO_BREED_TRUSTED_USERS_CACHE_KEY);
                 if (trustedUsers != null) {
                     synchronized (AUTO_BREED_TRUSTED_USERS) {
                         AUTO_BREED_TRUSTED_USERS.clear();
@@ -291,7 +290,7 @@ public final class PlantSettings {
     }
 
     private static void saveAutoBreedTrustedUsernames() {
-        Cacher.put(AUTO_BREED_TRUSTED_USERS_CACHE_KEY, new ArrayList<>(AUTO_BREED_TRUSTED_USERS));
+        PreferenceCacher.put(AUTO_BREED_TRUSTED_USERS_CACHE_KEY, new ArrayList<>(AUTO_BREED_TRUSTED_USERS));
     }
 
     private static void notifyAutoBreedListeners() {

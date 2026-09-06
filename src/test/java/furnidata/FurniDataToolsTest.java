@@ -22,7 +22,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.Isolated;
 
 import extension.TestLoggerLifecycleExtension;
-import gearth.misc.Cacher;
+import extension.util.PreferenceCacher;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -39,7 +39,7 @@ class FurniDataToolsTest {
             FileUtils.deleteDirectory(TEST_OUTPUT_DIR);
         } catch (IOException ignored) {}
         TEST_OUTPUT_DIR.mkdirs();
-        Cacher.setCacheDir(TEST_OUTPUT_DIR.getAbsolutePath());
+        PreferenceCacher.setCacheDir(TEST_OUTPUT_DIR.getAbsolutePath());
         log.info("[TEST] Cache directory set to: {}", TEST_OUTPUT_DIR.getAbsolutePath());
         log.info("[TEST] Intermediary test artifacts (furnidata cache files) will be stored in: {}", TEST_OUTPUT_DIR.getAbsolutePath());
     }
@@ -123,10 +123,10 @@ class FurniDataToolsTest {
             Integer seedTypeId = tools.getFloorTypeId("mnstr_seed");
             assertNotNull(seedTypeId, "mnstr_seed type ID should be resolved from URL data");
 
-            File cacheFile = new File(Cacher.getCacheDir(), FurniDataUtils.getCacheFilename(countryCode));
+            File cacheFile = new File(PreferenceCacher.getCacheDir(), FurniDataUtils.getCacheFilename(countryCode));
             assertTrue(cacheFile.exists(), "Cache file should be created after loading from URL");
 
-            Object hash = Cacher.get(FurniDataUtils.getHashCacheKey(countryCode));
+            Object hash = PreferenceCacher.get(FurniDataUtils.getHashCacheKey(countryCode));
             assertNotNull(hash, "FurniDataTools should store a hash in cache after loading from URL");
             assertNotNull(hash.toString(), "Hash should not be null");
             assertTrue(hash.toString().length() > 0, "Hash should not be empty");
@@ -146,16 +146,16 @@ class FurniDataToolsTest {
         final String host = "game-" + countryCode + ".habbo.com";
 
         // Set up cache with test data
-        Cacher.updateCache(createTestFurniJson(countryCode), FurniDataUtils.getCacheFilename(countryCode));
+        PreferenceCacher.updateCache(createTestFurniJson(countryCode), FurniDataUtils.getCacheFilename(countryCode));
 
         // Fetch the current hash from the server's redirect
         String currentHash = FurniDataUtils.fetchCurrentHash(host);
         assertNotNull(currentHash, "Should be able to fetch hash from server redirect");
 
         // Store the matching hash in cache
-        Cacher.put(FurniDataUtils.getHashCacheKey(countryCode), currentHash);
+        PreferenceCacher.put(FurniDataUtils.getHashCacheKey(countryCode), currentHash);
 
-        File cacheFile = new File(Cacher.getCacheDir(), FurniDataUtils.getCacheFilename(countryCode));
+        File cacheFile = new File(PreferenceCacher.getCacheDir(), FurniDataUtils.getCacheFilename(countryCode));
         assertTrue(cacheFile.exists(), "Cache file should exist before load");
 
         String content = readFileContents(cacheFile);
@@ -195,9 +195,9 @@ class FurniDataToolsTest {
 
         final String countryCode = "de";
 
-        Cacher.updateCache(createTestFurniJson(countryCode), FurniDataUtils.getCacheFilename(countryCode));
+        PreferenceCacher.updateCache(createTestFurniJson(countryCode), FurniDataUtils.getCacheFilename(countryCode));
 
-        File cacheFile = new File(Cacher.getCacheDir(), FurniDataUtils.getCacheFilename(countryCode));
+        File cacheFile = new File(PreferenceCacher.getCacheDir(), FurniDataUtils.getCacheFilename(countryCode));
         assertTrue(cacheFile.exists(), "Cache file should exist");
 
         String content = readFileContents(cacheFile);

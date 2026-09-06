@@ -15,7 +15,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import extension.entity.AutoBreedTrustedUser;
 import extension.util.PlantSettings;
-import gearth.misc.Cacher;
+import extension.util.PreferenceCacher;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -577,7 +577,7 @@ public class PlantsController {
 
     private String loadCachedLogLevel() {
         try {
-            Object cached = Cacher.get(LOG_LEVEL_CACHE_KEY);
+            Object cached = PreferenceCacher.get(LOG_LEVEL_CACHE_KEY);
             if (cached instanceof String) {
                 String value = ((String) cached).toUpperCase();
                 if (VALID_LOG_LEVELS.contains(value)) {
@@ -595,7 +595,7 @@ public class PlantsController {
             Level level = Level.toLevel(levelName, Level.INFO);
             Logger logger = (Logger) LoggerFactory.getLogger("extension");
             logger.setLevel(level);
-            Cacher.put(LOG_LEVEL_CACHE_KEY, level.toString());
+            PreferenceCacher.put(LOG_LEVEL_CACHE_KEY, level.toString());
             log.info("[Plants] Set log level to {}", level);
         } catch (Exception e) {
             log.error("Failed to set log level", e);

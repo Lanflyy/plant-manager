@@ -72,7 +72,7 @@ public class Plants extends ExtensionForm {
     private boolean isAlreadyConnected = false;
 
     @Override
-    protected void initExtension() {
+    public void initExtension() {
         isAlreadyConnected = getPacketInfoManager() != null && !getPacketInfoManager().getPacketInfoList().isEmpty();
 
         furniDataState = new FurniDataStateHandler(this::updateFurniDataStateLabel);
@@ -152,7 +152,7 @@ public class Plants extends ExtensionForm {
     }
 
     @Override
-    protected void onStartConnection() {
+    public void onStartConnection() {
         log.debug("[Connection] Started");
         uiController.updateConnectionState(true);
 
@@ -163,7 +163,7 @@ public class Plants extends ExtensionForm {
     }
 
     @Override
-    protected void onEndConnection() {
+    public void onEndConnection() {
         uiController.updateConnectionState(false);
         uiController.updateRoomState(false);
         if (plantManagerFeature != null) {

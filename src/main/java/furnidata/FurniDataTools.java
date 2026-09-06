@@ -15,9 +15,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import extension.util.PreferenceCacher;
 import furnidata.details.FloorItemDetails;
 import furnidata.details.WallItemDetails;
-import gearth.misc.Cacher;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -67,12 +67,12 @@ public class FurniDataTools {
     }
 
     private boolean tryLoadFromCache() {
-        if (!Cacher.cacheFileExists(cacheFilename)) {
+        if (!PreferenceCacher.cacheFileExists(cacheFilename)) {
             return false;
         }
 
         try {
-            File cacheFile = new File(Cacher.getCacheDir(), cacheFilename);
+            File cacheFile = new File(PreferenceCacher.getCacheDir(), cacheFilename);
             String contents = FileUtils.readFileToString(cacheFile, StandardCharsets.UTF_8);
             JSONObject object = new JSONObject(contents);
             parseJson(object);
@@ -92,7 +92,7 @@ public class FurniDataTools {
 
     private void storeCache(String content) {
         try {
-            Cacher.updateCache(content, cacheFilename);
+            PreferenceCacher.updateCache(content, cacheFilename);
             log.debug("[FurniData] Stored furni data cache file: {}", cacheFilename);
         } catch (Exception e) {
             log.warn("[FurniData] Failed to store cache file {}", cacheFilename, e);
@@ -123,7 +123,7 @@ public class FurniDataTools {
 
     private String getCachedHash() {
         try {
-            Object val = Cacher.get(getFurniDataHashKey());
+            Object val = PreferenceCacher.get(getFurniDataHashKey());
             if (val != null) {
                 return val.toString();
             }
@@ -135,7 +135,7 @@ public class FurniDataTools {
 
     private void storeCachedHash(String hash) {
         try {
-            Cacher.put(getFurniDataHashKey(), hash);
+            PreferenceCacher.put(getFurniDataHashKey(), hash);
             log.debug("[FurniData] Stored hash {} for countryCode {}", hash, countryCode);
         } catch (Exception e) {
             log.warn("[FurniData] Failed to store hash in cache", e);
@@ -144,7 +144,7 @@ public class FurniDataTools {
 
     private Long getCachedTimestamp() {
         try {
-            Object val = Cacher.get(FurniDataUtils.getTimestampCacheKey(countryCode));
+            Object val = PreferenceCacher.get(FurniDataUtils.getTimestampCacheKey(countryCode));
             if (val != null) {
                 return Long.valueOf(val.toString());
             }
@@ -156,7 +156,7 @@ public class FurniDataTools {
 
     private Integer getCachedMaxAgeSeconds() {
         try {
-            Object val = Cacher.get(FurniDataUtils.getMaxAgeCacheKey(countryCode));
+            Object val = PreferenceCacher.get(FurniDataUtils.getMaxAgeCacheKey(countryCode));
             if (val != null) {
                 return Integer.valueOf(val.toString());
             }
@@ -168,8 +168,8 @@ public class FurniDataTools {
 
     private void storeCacheTimestampAndMaxAge(long timestamp, int maxAgeSeconds) {
         try {
-            Cacher.put(FurniDataUtils.getTimestampCacheKey(countryCode), String.valueOf(timestamp));
-            Cacher.put(FurniDataUtils.getMaxAgeCacheKey(countryCode), String.valueOf(maxAgeSeconds));
+            PreferenceCacher.put(FurniDataUtils.getTimestampCacheKey(countryCode), String.valueOf(timestamp));
+            PreferenceCacher.put(FurniDataUtils.getMaxAgeCacheKey(countryCode), String.valueOf(maxAgeSeconds));
         } catch (Exception e) {
             log.warn("[FurniData] Failed to store cache timestamp/max-age", e);
         }

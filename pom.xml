@@ -99,8 +99,8 @@
     <dependencies>
         <dependency>
             <groupId>G-Earth</groupId>
-            <artifactId>G-Earth</artifactId>
-            <version>1.5.3</version>
+            <artifactId>G-Earth-Api</artifactId>
+            <version>1.5.4-beta-29-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
