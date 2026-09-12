@@ -100,7 +100,7 @@
         <dependency>
             <groupId>G-Earth</groupId>
             <artifactId>G-Earth-Api</artifactId>
-            <version>1.5.4-beta-29-SNAPSHOT</version>
+            <version>1.5.4-beta-29-SNAPSHOT-jdk18</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
