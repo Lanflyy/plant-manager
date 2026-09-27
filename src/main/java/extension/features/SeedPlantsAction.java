@@ -1,5 +1,8 @@
 package extension.features;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,14 +23,15 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandler<HFloorItem> {
 
-    private static final String SEED_FURNI_CLASSNAME = "mnstr_seed";
+    private static final List<String> SUPPORTED_SEED_FURNI_CLASSNAME_LIST =
+            Collections.unmodifiableList(Arrays.asList("mnstr_seed_nt", "mnstr_seed"));
 
     @NonNull
     private final PlantManagerFeature manager;
     @NonNull
     private final BulkItemProcessor processor;
 
-    private int seedTypeId = -1;
+    private volatile List<Integer> seedTypeIds = Collections.emptyList();
 
     @Override
     public void execute() {
@@ -49,13 +53,22 @@ public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandl
             return;
         }
 
-        Integer resolved = manager.getFloorTypeId(SEED_FURNI_CLASSNAME);
-        if (resolved == null) {
-            log.error("[Plants] Cannot find floor type ID for classname '{}'", SEED_FURNI_CLASSNAME);
+        List<Integer> resolvedSeedFloorTypeIds = new ArrayList<>();
+        for (String supportedSeedClassName : SUPPORTED_SEED_FURNI_CLASSNAME_LIST) {
+            Integer resolvedSeedFloorTypeId = manager.getFloorTypeId(supportedSeedClassName);
+            if (resolvedSeedFloorTypeId != null) {
+                resolvedSeedFloorTypeIds.add(resolvedSeedFloorTypeId);
+            } else {
+                log.warn("[Plants] Cannot find floor type ID for classname '{}'", supportedSeedClassName);
+            }
+        }
+
+        if (resolvedSeedFloorTypeIds.isEmpty()) {
+            log.error("[Plants] Cannot find floor type IDs for classnames {}", SUPPORTED_SEED_FURNI_CLASSNAME_LIST);
             NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Error: Could not find seed type in furni data.");
             return;
         }
-        seedTypeId = resolved;
+        seedTypeIds = Collections.unmodifiableList(resolvedSeedFloorTypeIds);
 
         List<HFloorItem> targetSeeds = manager.getFloorItemsSnapshot().stream()
                 .filter(this::shouldProcess)
@@ -68,12 +81,12 @@ public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandl
 
     @Override
     public boolean shouldProcess(HFloorItem item) {
-        if (seedTypeId < 0) {
-            log.warn("[Plants] Seed type ID not resolved, skipping item {}", item.getId());
+        if (seedTypeIds.isEmpty()) {
+            log.warn("[Plants] Seed type IDs not resolved, skipping item {}", item.getId());
             return false;
         }
 
-        if (item.getTypeId() != seedTypeId) {
+        if (!seedTypeIds.contains(item.getTypeId())) {
             return false;
         }
 
