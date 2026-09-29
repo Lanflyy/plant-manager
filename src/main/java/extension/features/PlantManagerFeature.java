@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import extension.i18n.MessageService;
 import extension.state.FurniDataStateHandler;
 import extension.state.RoomEntityState;
 import extension.state.RoomObjectState;
@@ -183,7 +184,7 @@ public final class PlantManagerFeature {
         }
 
         if (!isInitialized()) {
-            NotificationUtils.showSystemNotificationToUser(getExtension(), "Error: Room not initialized yet! Please wait for the room to load or reload it.");
+            NotificationUtils.showSystemNotificationToUser(getExtension(), MessageService.getValue("error.room.not.initialized"));
             log.debug("[Chat] Command rejected because the room is not initialized");
             return;
         }
@@ -230,7 +231,7 @@ public final class PlantManagerFeature {
             boolean enabled = AUTO_BREED_ON_COMMAND.equals(text);
             PlantSettings.setAutoBreedEnabled(enabled);
             int trustedUserCount = PlantSettings.getAutoBreedTrustedUsernames().size();
-            NotificationUtils.showSystemNotificationToUser(getExtension(), "Auto-accept breeding has been turned " + (enabled ? "on" : "off") + " (" + trustedUserCount + " trusted users).");
+            NotificationUtils.showSystemNotificationToUser(getExtension(), MessageService.getValue(enabled ? "autobreed.enabled" : "autobreed.disabled", trustedUserCount));
             log.info("[AutoBreed] Auto-accept breeding turned {} with {} trusted users", enabled ? "on" : "off", trustedUserCount);
             return;
         }

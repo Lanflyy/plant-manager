@@ -14,6 +14,7 @@ import org.w3c.dom.NodeList;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import extension.entity.AutoBreedTrustedUser;
+import extension.i18n.MessageService;
 import extension.util.PlantSettings;
 import extension.util.PreferenceCacher;
 import javafx.animation.PauseTransition;
@@ -28,6 +29,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -45,8 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PlantsController {
 
-    private static final String AUTO_BREED_ACCEPT_MODE_TRUSTED_USERS = "Trusted Users only";
-    private static final String AUTO_BREED_ACCEPT_MODE_ANY_USER = "Any user";
     private static final String LOG_LEVEL_CACHE_KEY = "plants.logLevel";
     private static final String DEFAULT_LOG_LEVEL = "INFO";
     private static final URL COPY_ICON_RESOURCE = requireIconResource("/icons/copy_icon.svg");
@@ -75,6 +75,16 @@ public class PlantsController {
 
     private final PlantsView view;
 
+    private Tab tabHome;
+    private Tab tabLogs;
+    private Tab tabSettings;
+    private Label lblState;
+    private Label lblLogLevel;
+    private Label lblAdvancedOptions;
+    private Label lblAutoAcceptBreeding;
+    private Label lblTrustedUsers;
+    private Label lblAvailableCommands;
+
     public PlantsController(
             VBox commandsBox,
             TextArea logArea,
@@ -89,7 +99,16 @@ public class PlantsController {
             Button btnAutoBreedRemove,
             TableView<AutoBreedTrustedUser> tblAutoBreedUsers,
             Label connectedLbl,
-        Label roomLbl
+            Label roomLbl,
+            Tab tabHome,
+            Tab tabLogs,
+            Tab tabSettings,
+            Label lblState,
+            Label lblLogLevel,
+            Label lblAdvancedOptions,
+            Label lblAutoAcceptBreeding,
+            Label lblTrustedUsers,
+            Label lblAvailableCommands
     ) {
         this.logLevelCombo = logLevelCombo;
         this.chkRequestPetInfo = chkRequestPetInfo;
@@ -104,12 +123,22 @@ public class PlantsController {
         this.commandsBox = commandsBox;
         this.connectedLbl = connectedLbl;
         this.roomLbl = roomLbl;
+        this.tabHome = tabHome;
+        this.tabLogs = tabLogs;
+        this.tabSettings = tabSettings;
+        this.lblState = lblState;
+        this.lblLogLevel = lblLogLevel;
+        this.lblAdvancedOptions = lblAdvancedOptions;
+        this.lblAutoAcceptBreeding = lblAutoAcceptBreeding;
+        this.lblTrustedUsers = lblTrustedUsers;
+        this.lblAvailableCommands = lblAvailableCommands;
         this.view = new PlantsView(commandsBox, logArea);
     }
 
     public void initialize() {
         view.initialize();
         log.debug("[Plants] UI initialized");
+        refreshAllText();
         initCommandsBox();
         initLogLevelControl();
         initSettingsControl();
@@ -117,30 +146,66 @@ public class PlantsController {
         initHelpIcon();
     }
 
-    private void initCommandsBox() {
-        if (commandsBox == null) return;
-
+    public void refreshAllText() {
         Platform.runLater(() -> {
-            String[][] commands = {
-                {":plants", "Treat every living plant in the current room"},
-                {":plants compost", "Compost every dead plant in the current room"},
-                {":plants seed", "Plant every seed in the current room"},
-                {":plants canreproduce on", "Enable \"Can Reproduce\" for all plants"},
-                {":plants canreproduce off", "Disable \"Can Reproduce\" for all plants"},
-                {":plants countcanbreed", "Count how many plants can breed"},
-                {":plants autobreed on", "Enable auto-accept breeding (check Settings)"},
-                {":plants autobreed off", "Disable auto-accept breeding"},
-                {":plants autobreed adduser NAME", "Add a trusted auto-breed user"},
-                {":plants autobreed adduser", "Add a trusted auto-breed user by clicking them"},
-                {":plants autobreed removeuser NAME", "Remove a trusted auto-breed user"},
-                {":plants autobreed removeuser", "Remove a trusted auto-breed user by clicking them"},
-                {":plants abort", "Stop any current processing plant action"}
-            };
-
-            for (int i = 0; i < commands.length; i++) {
-                commandsBox.getChildren().add(createCommandRow(commands[i][0], commands[i][1], i));
+            if (tabHome != null) tabHome.setText(MessageService.getValue("tab.home"));
+            if (tabLogs != null) tabLogs.setText(MessageService.getValue("tab.logs"));
+            if (tabSettings != null) tabSettings.setText(MessageService.getValue("tab.settings"));
+            if (lblState != null) lblState.setText(MessageService.getValue("label.state"));
+            if (lblAvailableCommands != null) lblAvailableCommands.setText(MessageService.getValue("label.available.commands"));
+            if (lblLogLevel != null) lblLogLevel.setText(MessageService.getValue("label.log.level"));
+            if (lblAdvancedOptions != null) lblAdvancedOptions.setText(MessageService.getValue("label.advanced.options"));
+            if (lblAutoAcceptBreeding != null) lblAutoAcceptBreeding.setText(MessageService.getValue("label.auto.accept.breeding"));
+            if (lblTrustedUsers != null) lblTrustedUsers.setText(MessageService.getValue("label.trusted.users"));
+            if (chkRequestPetInfo != null) chkRequestPetInfo.setText(MessageService.getValue("chk.request.pet.info"));
+            if (chkAutoBreed != null) chkAutoBreed.setText(MessageService.getValue("chk.enable.auto.breed"));
+            if (chkAutoBreedRequireSameOrHigherRarity != null) chkAutoBreedRequireSameOrHigherRarity.setText(MessageService.getValue("chk.auto.breed.rarity"));
+            if (txtAutoBreedUsername != null) txtAutoBreedUsername.setPromptText(MessageService.getValue("txt.username.prompt"));
+            if (btnAutoBreedAdd != null) btnAutoBreedAdd.setText(MessageService.getValue("btn.add"));
+            if (btnAutoBreedRemove != null) btnAutoBreedRemove.setText(MessageService.getValue("btn.remove.checked"));
+            if (cmbAutoBreedAcceptMode != null) {
+                String currentValue = cmbAutoBreedAcceptMode.getValue();
+                cmbAutoBreedAcceptMode.setItems(FXCollections.observableArrayList(
+                        MessageService.getValue("auto.breed.mode.trusted"),
+                        MessageService.getValue("auto.breed.mode.any")));
+                if (currentValue != null) {
+                    boolean wasAnyUser = "Any user".equals(currentValue) || MessageService.getValue("auto.breed.mode.any").equals(currentValue);
+                    cmbAutoBreedAcceptMode.getSelectionModel().select(wasAnyUser ? MessageService.getValue("auto.breed.mode.any") : MessageService.getValue("auto.breed.mode.trusted"));
+                }
+            }
+            refreshCommandsBox();
+            if (ttPetInfoHelp != null) {
+                ttPetInfoHelp.setText(MessageService.getValue("tooltip.pet.info.help"));
             }
         });
+    }
+
+    private void refreshCommandsBox() {
+        if (commandsBox == null) return;
+        commandsBox.getChildren().clear();
+        String[][] commands = {
+            {":plants", MessageService.getValue("cmd.treat.description")},
+            {":plants compost", MessageService.getValue("cmd.compost.description")},
+            {":plants seed", MessageService.getValue("cmd.seed.description")},
+            {":plants canreproduce on", MessageService.getValue("cmd.canreproduce.on.description")},
+            {":plants canreproduce off", MessageService.getValue("cmd.canreproduce.off.description")},
+            {":plants countcanbreed", MessageService.getValue("cmd.countcanbreed.description")},
+            {":plants autobreed on", MessageService.getValue("cmd.autobreed.on.description")},
+            {":plants autobreed off", MessageService.getValue("cmd.autobreed.off.description")},
+            {":plants autobreed adduser NAME", MessageService.getValue("cmd.autobreed.adduser.description")},
+            {":plants autobreed adduser", MessageService.getValue("cmd.autobreed.adduser.click.description")},
+            {":plants autobreed removeuser NAME", MessageService.getValue("cmd.autobreed.removeuser.description")},
+            {":plants autobreed removeuser", MessageService.getValue("cmd.autobreed.removeuser.click.description")},
+            {":plants abort", MessageService.getValue("cmd.abort.description")}
+        };
+        for (int i = 0; i < commands.length; i++) {
+            commandsBox.getChildren().add(createCommandRow(commands[i][0], commands[i][1], i));
+        }
+    }
+
+    private void initCommandsBox() {
+        if (commandsBox == null) return;
+        Platform.runLater(this::refreshCommandsBox);
     }
 
     private HBox createCommandRow(String command, String description, int index) {
@@ -175,7 +240,7 @@ public class PlantsController {
         helpButton.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
         helpButton.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
 
-        Label copiedLabel = new Label("(copied)");
+        Label copiedLabel = new Label(MessageService.getValue("tooltip.copied"));
         copiedLabel.setStyle("-fx-text-fill: #2ecc71; -fx-font-size: 11px; -fx-font-weight: bold;");
         copiedLabel.setVisible(false);
 
@@ -223,7 +288,7 @@ public class PlantsController {
             clipboard.setContent(content);
 
             copyButton.setGraphic(null);
-            copyButton.setText("✓");
+            copyButton.setText("\u2713");
             copyButton.setStyle("-fx-text-fill: #2ecc71; -fx-font-weight: bold; " + baseButtonStyle);
             copiedLabel.setVisible(true);
             activeCopyResetPause = copyResetPause;
@@ -233,7 +298,7 @@ public class PlantsController {
 
         copyButton.setOnAction(e -> doCopy.run());
 
-        Tooltip copyTooltip = new Tooltip("Copy command");
+        Tooltip copyTooltip = new Tooltip(MessageService.getValue("tooltip.copy.command"));
         copyButton.setOnMouseEntered(e -> {
             if (!copyTooltip.isShowing()) {
                 Point2D p = copyButton.localToScreen(0, copyButton.getHeight());
@@ -297,7 +362,7 @@ public class PlantsController {
     public void updateConnectionState(boolean connected) {
         Platform.runLater(() -> {
             if (connectedLbl != null) {
-                connectedLbl.setText(connected ? "Connected" : "Not connected");
+                connectedLbl.setText(connected ? MessageService.getValue("label.connected") : MessageService.getValue("label.not.connected"));
                 connectedLbl.setStyle(connected
                         ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
                         : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
@@ -347,7 +412,7 @@ public class PlantsController {
     public void updateRoomState(boolean inRoom) {
         Platform.runLater(() -> {
             if (roomLbl != null) {
-                roomLbl.setText(inRoom ? "Room Loaded" : "Room Not Loaded");
+                roomLbl.setText(inRoom ? MessageService.getValue("label.room.loaded") : MessageService.getValue("label.room.not.loaded"));
                 roomLbl.setStyle(inRoom
                         ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
                         : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
@@ -382,11 +447,13 @@ public class PlantsController {
                 });
             }
             if (cmbAutoBreedAcceptMode != null) {
-                cmbAutoBreedAcceptMode.setItems(FXCollections.observableArrayList(AUTO_BREED_ACCEPT_MODE_TRUSTED_USERS, AUTO_BREED_ACCEPT_MODE_ANY_USER));
+                cmbAutoBreedAcceptMode.setItems(FXCollections.observableArrayList(
+                        MessageService.getValue("auto.breed.mode.trusted"),
+                        MessageService.getValue("auto.breed.mode.any")));
                 cmbAutoBreedAcceptMode.setOnAction(e -> {
                     String value = cmbAutoBreedAcceptMode.getValue();
                     if (value != null) {
-                        PlantSettings.setAutoBreedAcceptAllUsers(AUTO_BREED_ACCEPT_MODE_ANY_USER.equals(value));
+                        PlantSettings.setAutoBreedAcceptAllUsers(MessageService.getValue("auto.breed.mode.any").equals(value));
                     }
                 });
             }
@@ -400,7 +467,7 @@ public class PlantsController {
                 txtAutoBreedUsername.setOnAction(e -> addAutoBreedUsername());
             }
             if (btnAutoBreedRemove != null) {
-                btnAutoBreedRemove.setText("Remove checked");
+                btnAutoBreedRemove.setText(MessageService.getValue("btn.remove.checked"));
                 btnAutoBreedRemove.setOnAction(e -> removeCheckedAutoBreedUsernames());
             }
             PlantSettings.addAutoBreedListener(this::refreshAutoBreedControls);
@@ -422,7 +489,7 @@ public class PlantsController {
         checkedColumn.setEditable(true);
         checkedColumn.setStyle("-fx-alignment: CENTER;");
 
-        autoBreedUsernameColumn = new TableColumn<>("Username");
+        autoBreedUsernameColumn = new TableColumn<>(MessageService.getValue("txt.username.prompt"));
         autoBreedUsernameColumn.setMinWidth(42.0);
         autoBreedUsernameColumn.setCellValueFactory(cellData -> cellData.getValue().usernameProperty());
         autoBreedUsernameColumn.setCellFactory(TextFieldTableCell.forTableColumn());
@@ -440,8 +507,8 @@ public class PlantsController {
         actionColumn.setMaxWidth(100.0);
         actionColumn.setStyle("-fx-alignment: CENTER;");
         actionColumn.setCellFactory(column -> new TableCell<AutoBreedTrustedUser, Void>() {
-            private final Button editButton = createActionButton("✎");
-            private final Button deleteButton = createActionButton("❌");
+            private final Button editButton = createActionButton("\u270E");
+            private final Button deleteButton = createActionButton("\u274C");
             private final HBox actions = new HBox(6.0, editButton, deleteButton);
 
             {
@@ -506,7 +573,7 @@ public class PlantsController {
             }
             if (cmbAutoBreedAcceptMode != null) {
                 boolean acceptAllUsers = PlantSettings.isAutoBreedAcceptAllUsers();
-                cmbAutoBreedAcceptMode.getSelectionModel().select(acceptAllUsers ? AUTO_BREED_ACCEPT_MODE_ANY_USER : AUTO_BREED_ACCEPT_MODE_TRUSTED_USERS);
+                cmbAutoBreedAcceptMode.getSelectionModel().select(acceptAllUsers ? MessageService.getValue("auto.breed.mode.any") : MessageService.getValue("auto.breed.mode.trusted"));
             }
             if (chkAutoBreedRequireSameOrHigherRarity != null) {
                 chkAutoBreedRequireSameOrHigherRarity.setSelected(PlantSettings.isAutoBreedRequireSameOrHigherRarity());
@@ -531,10 +598,7 @@ public class PlantsController {
         try {
             if (btnPetInfoHelp == null) return;
             try {
-                String tip = "When enabled, the extension will request plant (pet) info before treating it.\n" +
-                        "This is done to avoid sending treats that shouldn't be sent (e.g. if well being is already very high).";
-
-                ttPetInfoHelp = new Tooltip(tip);
+                ttPetInfoHelp = new Tooltip(MessageService.getValue("tooltip.pet.info.help"));
 
                 btnPetInfoHelp.setOnMouseEntered(e -> {
                     if (ttPetInfoHelp != null && !ttPetInfoHelp.isShowing()) {

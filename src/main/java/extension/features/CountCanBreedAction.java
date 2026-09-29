@@ -1,5 +1,6 @@
 package extension.features;
 
+import extension.i18n.MessageService;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ public class CountCanBreedAction implements UserActionExecutor {
                 .filter(plant -> PlantUtils.getOwnerId(plant) != currentUserId)
                 .count();
         NotificationUtils.showSystemNotificationToUser(manager.getExtension(),
-                "Plants that can breed - Owned: " + ownedCanBreed + ", Not owned: " + notOwnedCanBreed);
+                MessageService.getValue("count.can.breed", ownedCanBreed, notOwnedCanBreed));
         log.debug("[Chat] Count can breed: owned={}, notOwned={}", ownedCanBreed, notOwnedCanBreed);
     }
 }

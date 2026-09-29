@@ -5,6 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import extension.entity.ACTION_COMMAND_TYPE;
+import extension.i18n.MessageService;
 import extension.util.NotificationUtils;
 import gearth.extensions.ExtensionForm;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ public class BulkItemProcessor {
     public <T> boolean startProcessing(ItemProcessingHandler<T> handler, java.util.Collection<T> items) {
         if (!processing.compareAndSet(false, true)) {
             log.debug("[Plants] Processing already running");
-            NotificationUtils.showSystemNotificationToUser(extension, "Plant processing is already running. Abort first the previous one");
+            NotificationUtils.showSystemNotificationToUser(extension, MessageService.getValue("processing.already.running"));
             return false;
         }
 

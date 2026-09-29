@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.NonNull;
 
 import extension.entity.ACTION_COMMAND_TYPE;
+import extension.i18n.MessageService;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
 import gearth.extensions.parsers.HEntity;
@@ -26,7 +27,7 @@ public class CompostPlantsAction implements UserActionExecutor, ItemProcessingHa
         List<HEntity> plants = manager.getPlantsSnapshot().stream()
                 .filter(this::shouldProcess)
                 .collect(Collectors.toList());
-        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Composting plants started... (Found " + plants.size() + " compostable plants)");
+        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("compost.started", plants.size()));
         log.debug("[Plants] Compost command started. Plants to process: {}, Total plants: {}", plants.size(), manager.getPlantCount());
         processor.startProcessing(this, plants);
     }

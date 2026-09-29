@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.NonNull;
 
 import extension.entity.ACTION_COMMAND_TYPE;
+import extension.i18n.MessageService;
 import extension.state.FurniDataStateHandler;
 import extension.util.NotificationUtils;
 import extension.util.SleepRateLimit;
@@ -36,7 +37,7 @@ public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandl
     @Override
     public void execute() {
         if (manager.getCurrentUserId() == -1 && manager.getCurrentUsername() == null) {
-            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Error: User info not loaded yet. Try again in a moment.");
+            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("error.user.info.not.loaded"));
             log.debug("[Plants] Seed command rejected because user info is missing");
             manager.getExtension().sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER));
             return;
@@ -44,12 +45,12 @@ public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandl
 
         FurniDataStateHandler furniDataState = manager.getFurniDataStateHandler();
         if (furniDataState == null) {
-            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Error: Furni data not enabled for this extension.");
+            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("error.furni.data.not.enabled"));
             return;
         }
 
         if (!furniDataState.isReady()) {
-            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Furni data is not loaded.");
+            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("error.furni.data.not.loaded"));
             return;
         }
 
@@ -65,7 +66,7 @@ public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandl
 
         if (resolvedSeedFloorTypeIds.isEmpty()) {
             log.error("[Plants] Cannot find floor type IDs for classnames {}", SUPPORTED_SEED_FURNI_CLASSNAME_LIST);
-            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Error: Could not find seed type in furni data.");
+            NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("error.seed.type.not.found"));
             return;
         }
         seedTypeIds = Collections.unmodifiableList(resolvedSeedFloorTypeIds);
@@ -74,7 +75,7 @@ public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandl
                 .filter(this::shouldProcess)
                 .collect(Collectors.toList());
 
-        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Seeding plants started... (Found " + targetSeeds.size() + " seeds)");
+        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("seed.started", targetSeeds.size()));
         log.debug("[Plants] Seed command started. Target seeds: {}", targetSeeds.size());
         processor.startProcessing(this, targetSeeds);
     }
@@ -120,7 +121,7 @@ public class SeedPlantsAction implements UserActionExecutor, ItemProcessingHandl
 
     @Override
     public void showSystemNotification(ExtensionForm extension, int processedCount) {
-        NotificationUtils.showSystemNotificationToUser(extension, "All plant seeds have been " + getActionCommandType().getVerb() + " (" + processedCount + ")");
+        NotificationUtils.showSystemNotificationToUser(extension, MessageService.getValue("seed.completed", getActionCommandType().getVerb(), processedCount));
     }
 
 	@Override

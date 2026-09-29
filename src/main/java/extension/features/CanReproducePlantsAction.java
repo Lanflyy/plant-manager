@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import extension.entity.ACTION_COMMAND_TYPE;
+import extension.i18n.MessageService;
 import extension.util.NotificationUtils;
 import extension.util.PlantUtils;
 import extension.util.SleepRateLimit;
@@ -47,7 +48,7 @@ public class CanReproducePlantsAction implements UserActionExecutor, ItemProcess
         String stateLabel = targetState ? "on" : "off";
         NotificationUtils.showSystemNotificationToUser(
                 manager.getExtension(),
-                "Setting canReproduce " + stateLabel + " started... (Applying it to " + targets.size() + " out of " + allPlants.size() + " plants)");
+                MessageService.getValue("canreproduce.started", stateLabel, targets.size(), allPlants.size()));
         log.debug("[CanReproduce] Command started. target={}, plants to process={}/{}", stateLabel, targets.size(), allPlants.size());
         processor.startProcessing(this, targets);
     }
@@ -134,7 +135,7 @@ public class CanReproducePlantsAction implements UserActionExecutor, ItemProcess
     public void showSystemNotification(ExtensionForm extension, int processedCount) {
         String stateLabel = targetState ? "on" : "off";
         NotificationUtils.showSystemNotificationToUser(extension,
-                "canReproduce set to " + stateLabel + " for " + processedCount + " plant(s).");
+                MessageService.getValue("canreproduce.completed", stateLabel, processedCount));
     }
 
     @Override

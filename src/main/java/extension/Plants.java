@@ -2,6 +2,7 @@ package extension;
 
 import extension.entity.AutoBreedTrustedUser;
 import extension.features.PlantManagerFeature;
+import extension.i18n.MessageService;
 import extension.state.FurniDataStateHandler;
 import extension.ui.PlantsController;
 import furnidata.FurniDataState;
@@ -13,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -58,6 +60,24 @@ public class Plants extends ExtensionForm {
     private Label roomLbl;
     @FXML
     private Label furniDataStateLbl;
+    @FXML
+    private Tab tabHome;
+    @FXML
+    private Tab tabLogs;
+    @FXML
+    private Tab tabSettings;
+    @FXML
+    private Label lblState;
+    @FXML
+    private Label lblLogLevel;
+    @FXML
+    private Label lblAdvancedOptions;
+    @FXML
+    private Label lblAutoAcceptBreeding;
+    @FXML
+    private Label lblTrustedUsers;
+    @FXML
+    private Label lblAvailableCommands;
 
     private PlantsController uiController;
     private PlantManagerFeature plantManagerFeature;
@@ -65,7 +85,7 @@ public class Plants extends ExtensionForm {
     private String currentHost;
 
     public void initialize() {
-        uiController = new PlantsController(commandsBox, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers, connectedLbl, roomLbl);
+        uiController = new PlantsController(commandsBox, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers, connectedLbl, roomLbl, tabHome, tabLogs, tabSettings, lblState, lblLogLevel, lblAdvancedOptions, lblAutoAcceptBreeding, lblTrustedUsers, lblAvailableCommands);
         uiController.initialize();
     }
 
@@ -88,6 +108,16 @@ public class Plants extends ExtensionForm {
         });
     }
 
+    @Override
+    public void handleLanguageChange(String locale) {
+        MessageService.setLanguage(locale);
+        MessageService.clearCache();
+        if (uiController != null) {
+            uiController.refreshAllText();
+        }
+        updateFurniDataStateLabel(furniDataState.getState());
+    }
+
     private void updateStateLabels() {
         if (uiController == null) return;
         boolean inRoom = plantManagerFeature.isInitialized();
@@ -99,28 +129,28 @@ public class Plants extends ExtensionForm {
         Platform.runLater(() -> {
             switch (state) {
                 case LOADED:
-                    furniDataStateLbl.setText("Furni Data Loaded");
+                    furniDataStateLbl.setText(MessageService.getValue("furni.data.loaded"));
                     furniDataStateLbl.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
                 case CACHED:
-                    furniDataStateLbl.setText("Furni Data Cache Hit");
+                    furniDataStateLbl.setText(MessageService.getValue("furni.data.cache.hit"));
                     furniDataStateLbl.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
                 case CACHED_WITH_REFRESH_ERROR:
-                    furniDataStateLbl.setText("Furni Data Cache Hit (Refresh error)");
+                    furniDataStateLbl.setText(MessageService.getValue("furni.data.cache.hit.refresh.error"));
                     furniDataStateLbl.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
                 case LOADING:
-                    furniDataStateLbl.setText("Loading Furni Data...");
+                    furniDataStateLbl.setText(MessageService.getValue("furni.data.loading"));
                     furniDataStateLbl.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
                 case FAILED:
-                    furniDataStateLbl.setText("Furni Data Failed");
+                    furniDataStateLbl.setText(MessageService.getValue("furni.data.failed"));
                     furniDataStateLbl.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
                 case UNAVAILABLE:
                 default:
-                    furniDataStateLbl.setText("Furni Data Not Loaded");
+                    furniDataStateLbl.setText(MessageService.getValue("furni.data.not.loaded"));
                     furniDataStateLbl.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
                     break;
             }

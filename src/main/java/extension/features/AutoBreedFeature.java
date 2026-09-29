@@ -1,6 +1,7 @@
 package extension.features;
 
 import extension.entity.HEntity_Plant_Stuff_Index_Enum;
+import extension.i18n.MessageService;
 import extension.state.RoomEntityState;
 import extension.util.NotificationUtils;
 import extension.util.PlantSettings;
@@ -28,9 +29,6 @@ public final class AutoBreedFeature {
 
     private static final int BREED_PETS_COUNT = 2;
     private static final int AUTO_BREED_DELAY_MS = 250;
-    private static final String CLICK_ADD_USER_MESSAGE = "Please click on the user to add to auto-breed list";
-    private static final String CLICK_REMOVE_USER_MESSAGE = "Please click on the user to remove from auto-breed list";
-    private static final String ABORT_MESSAGE = "Auto-breed add/remove user action aborted.";
 
     private final PlantManagerFeature manager;
     private volatile PendingClickAction pendingClickAction = PendingClickAction.NONE;
@@ -55,12 +53,12 @@ public final class AutoBreedFeature {
 
     public void beginClickAddUser() {
         pendingClickAction = PendingClickAction.ADD;
-        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), CLICK_ADD_USER_MESSAGE);
+        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("autobreed.click.add"));
     }
 
     public void beginClickRemoveUser() {
         pendingClickAction = PendingClickAction.REMOVE;
-        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), CLICK_REMOVE_USER_MESSAGE);
+        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("autobreed.click.remove"));
     }
 
     public boolean isClickActionPending() {
@@ -72,7 +70,7 @@ public final class AutoBreedFeature {
         pendingClickAction = PendingClickAction.NONE;
         if (prev == PendingClickAction.ADD || prev == PendingClickAction.REMOVE) {
             if (showNotification) {
-                NotificationUtils.showSystemNotificationToUser(manager.getExtension(), ABORT_MESSAGE);
+                NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("autobreed.action.aborted"));
             }
         }
     }
@@ -87,12 +85,12 @@ public final class AutoBreedFeature {
         if (entity != null) {
             PlantSettings.resolveAutoBreedTrustedUserEntity(entity);
         }
-        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), added ? "Added " + username + " to auto-breed list." : username + " is already in auto-breed list.");
+        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), added ? MessageService.getValue("autobreed.added", username) : MessageService.getValue("autobreed.already.exists", username));
     }
 
     public void removeTrustedUsername(String username) {
         boolean removed = PlantSettings.removeAutoBreedTrustedUsername(username);
-        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), removed ? "Removed " + username + " from auto-breed list." : username + " was not in auto-breed list.");
+        NotificationUtils.showSystemNotificationToUser(manager.getExtension(), removed ? MessageService.getValue("autobreed.removed", username) : MessageService.getValue("autobreed.not.in.list", username));
     }
 
     private void resolveLoadedTrustedUsers() {
@@ -177,7 +175,7 @@ public final class AutoBreedFeature {
             int entityIndex = packet.readInteger();
             HEntity entity = findCurrentHabboEntityByIndex(entityIndex);
             if (entity == null) {
-                NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Could not find that user in memory.");
+                NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("autobreed.user.not.found"));
                 pendingClickAction = PendingClickAction.NONE;
                 return;
             }

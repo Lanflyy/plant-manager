@@ -1,5 +1,6 @@
 package extension.features;
 
+import extension.i18n.MessageService;
 import extension.util.NotificationUtils;
 import extension.util.PlantSettings;
 import extension.util.PlantUtils;
@@ -33,13 +34,8 @@ public class TreatPlantsAction implements UserActionExecutor, ItemProcessingHand
     public void execute() {
         long livingCount = manager.getPlantsSnapshot().stream().filter(plant -> !PlantUtils.isDeadPlant(plant)).count();
         long deadCount = manager.getPlantCount() - livingCount;
-        StringBuilder msg = new StringBuilder("Treating plants started... (");
-        msg.append(livingCount).append(" living");
-        if (deadCount > 0) {
-            msg.append(", ").append(deadCount).append(" dead ignored)");
-        } else {
-            msg.append(")");
-        }
+        String deadSuffix = deadCount > 0 ? MessageService.getValue("treat.dead.ignored", deadCount) : ")";
+        String msg = MessageService.getValue("treat.started", livingCount, deadSuffix);
         NotificationUtils.showSystemNotificationToUser(manager.getExtension(), msg.toString());
         log.debug("[Plants] Treat command started. Plants in memory: {}", manager.getPlantCount());
         processor.startProcessing(this, manager.getPlantsSnapshot());
@@ -107,7 +103,7 @@ public class TreatPlantsAction implements UserActionExecutor, ItemProcessingHand
                     log.debug("[PetInfo] Retrying GetPetInfo for {} (next attempt {}/{})", petId, attempt + 1, PETINFO_MAX_RETRIES);
                 } else {
                     log.debug("[PetInfo] All retries exhausted for {}", petId);
-                    NotificationUtils.showSystemNotificationToUser(manager.getExtension(), "Failed to retrieve plant info for pet " + petId + " after " + PETINFO_MAX_RETRIES + " attempts");
+                    NotificationUtils.showSystemNotificationToUser(manager.getExtension(), MessageService.getValue("pet.info.failed", petId, PETINFO_MAX_RETRIES));
                 }
             }
         }
@@ -143,9 +139,9 @@ public class TreatPlantsAction implements UserActionExecutor, ItemProcessingHand
     @Override
     public void showSystemNotification(ExtensionForm extension, int processedCount) {
         int skipped = skippedDueWellbeing.get();
-        String msg = "All plants have been " + getActionCommandType().getVerb() + " (" + processedCount + ")";
+        String msg = MessageService.getValue("action.completed", getActionCommandType().getVerb(), processedCount);
         if (skipped > 0) {
-            msg += ", skipped due to wellbeing: " + skipped;
+            msg += MessageService.getValue("action.completed.skipped", skipped);
         }
         NotificationUtils.showSystemNotificationToUser(manager.getExtension(), msg);
     }

@@ -25,7 +25,7 @@
 
    <tabs>
 
-      <Tab text="Home">
+      <Tab text="Home" fx:id="tabHome">
          <content>
             <VBox maxHeight="Infinity"
                   maxWidth="Infinity"
@@ -47,7 +47,7 @@
                               prefWidth="170.0"
                               style="-fx-border-color: lightgrey; -fx-border-width: 1px; -fx-border-radius: 5px; -fx-padding: 8;">
                            <children>
-                              <Label text="State"
+                              <Label fx:id="lblState" text="State"
                                      style="-fx-font-size: 12px; -fx-font-weight: bold;" />
                               <Label fx:id="connectedLbl"
                                      text="Not connected"
@@ -92,7 +92,7 @@
          </content>
       </Tab>
 
-      <Tab text="Logs">
+      <Tab text="Logs" fx:id="tabLogs">
          <content>
 
             <VBox maxHeight="Infinity"
@@ -122,8 +122,8 @@
 
                      <children>
 
-                        <Label text="Log level:"
-                               style="-fx-padding: 2 0 2 0;" />
+                         <Label fx:id="lblLogLevel" text="Log level:"
+                                style="-fx-padding: 2 0 2 0;" />
 
                         <ComboBox fx:id="logLevelCombo"
                                   prefWidth="140.0"
@@ -145,7 +145,7 @@
          </content>
       </Tab>
 
-      <Tab text="Settings">
+      <Tab text="Settings" fx:id="tabSettings">
          <content>
 
             <VBox maxHeight="Infinity"
@@ -162,8 +162,8 @@
                <children>
 
                   <!-- Advanced options -->
-                  <Label text="Advanced options"
-                         style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+                   <Label fx:id="lblAdvancedOptions" text="Advanced options"
+                          style="-fx-font-size: 14px; -fx-font-weight: bold;" />
 
                   <VBox spacing="8.0">
                      <children>
@@ -186,8 +186,8 @@
                   <Region prefHeight="2.0" />
 
                   <!-- Auto-accept breeding -->
-                  <Label text="Auto-accept breeding"
-                         style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+                   <Label fx:id="lblAutoAcceptBreeding" text="Auto-accept breeding"
+                          style="-fx-font-size: 14px; -fx-font-weight: bold;" />
 
                    <VBox spacing="8.0">
                       <children>
@@ -234,8 +234,8 @@
 
                   </HBox>
 
-                  <Label text="Trusted users"
-                         style="-fx-font-weight: bold;" />
+                   <Label fx:id="lblTrustedUsers" text="Trusted users"
+                          style="-fx-font-weight: bold;" />
 
                   <TableView fx:id="tblAutoBreedUsers"
                              editable="true"
