@@ -100,6 +100,8 @@ public class Plants extends ExtensionForm {
         isAlreadyConnected = getPacketInfoManager() != null && !getPacketInfoManager().getPacketInfoList().isEmpty();
 
         furniDataState = new FurniDataStateHandler(this::updateFurniDataStateLabel);
+        // Apply a language change that may have been received before initialization
+        updateFurniDataStateLabel(furniDataState.getState());
 
         plantManagerFeature = new PlantManagerFeature(this);
         plantManagerFeature.setFurniDataStateHandler(furniDataState);
@@ -119,7 +121,11 @@ public class Plants extends ExtensionForm {
         if (uiController != null) {
             uiController.refreshAllText();
         }
-        updateFurniDataStateLabel(furniDataState.getState());
+        // G-Earth sends host info (and thus the language) on init/update before initExtension() runs,
+        // in which case the furni data handler does not exist yet.
+        if (furniDataState != null) {
+            updateFurniDataStateLabel(furniDataState.getState());
+        }
     }
 
     private void updateStateLabels() {
