@@ -67,9 +67,13 @@ public class PlantsController {
     private TableColumn<AutoBreedTrustedUser, String> autoBreedUsernameColumn;
     private Tooltip ttPetInfoHelp;
 
-    private final VBox commandsBox;
+    private final VBox commandsList;
+    private final Button btnReloadFurniData;
+    private final Button btnClearLogs;
     private Label connectedLbl;
     private Label roomLbl;
+    private boolean lastConnected;
+    private boolean lastInRoom;
     private PauseTransition activeCopyResetPause;
     private Runnable activeCopyReset;
 
@@ -86,7 +90,6 @@ public class PlantsController {
     private Label lblAvailableCommands;
 
     public PlantsController(
-            VBox commandsBox,
             TextArea logArea,
             ComboBox<String> logLevelCombo,
             CheckBox chkRequestPetInfo,
@@ -108,7 +111,10 @@ public class PlantsController {
             Label lblAdvancedOptions,
             Label lblAutoAcceptBreeding,
             Label lblTrustedUsers,
-            Label lblAvailableCommands
+            Label lblAvailableCommands,
+            VBox commandsList,
+            Button btnReloadFurniData,
+            Button btnClearLogs
     ) {
         this.logLevelCombo = logLevelCombo;
         this.chkRequestPetInfo = chkRequestPetInfo;
@@ -120,7 +126,6 @@ public class PlantsController {
         this.btnAutoBreedAdd = btnAutoBreedAdd;
         this.btnAutoBreedRemove = btnAutoBreedRemove;
         this.tblAutoBreedUsers = tblAutoBreedUsers;
-        this.commandsBox = commandsBox;
         this.connectedLbl = connectedLbl;
         this.roomLbl = roomLbl;
         this.tabHome = tabHome;
@@ -132,7 +137,10 @@ public class PlantsController {
         this.lblAutoAcceptBreeding = lblAutoAcceptBreeding;
         this.lblTrustedUsers = lblTrustedUsers;
         this.lblAvailableCommands = lblAvailableCommands;
-        this.view = new PlantsView(commandsBox, logArea);
+        this.commandsList = commandsList;
+        this.btnReloadFurniData = btnReloadFurniData;
+        this.btnClearLogs = btnClearLogs;
+        this.view = new PlantsView(logArea);
     }
 
     public void initialize() {
@@ -163,6 +171,10 @@ public class PlantsController {
             if (txtAutoBreedUsername != null) txtAutoBreedUsername.setPromptText(MessageService.getValue("txt.username.prompt"));
             if (btnAutoBreedAdd != null) btnAutoBreedAdd.setText(MessageService.getValue("btn.add"));
             if (btnAutoBreedRemove != null) btnAutoBreedRemove.setText(MessageService.getValue("btn.remove.checked"));
+            if (btnReloadFurniData != null) btnReloadFurniData.setText(MessageService.getValue("btn.reload.furni.data"));
+            if (btnClearLogs != null) btnClearLogs.setText(MessageService.getValue("btn.clear.logs"));
+            applyConnectionState(lastConnected);
+            applyRoomState(lastInRoom);
             if (cmbAutoBreedAcceptMode != null) {
                 String currentValue = cmbAutoBreedAcceptMode.getValue();
                 cmbAutoBreedAcceptMode.setItems(FXCollections.observableArrayList(
@@ -181,8 +193,8 @@ public class PlantsController {
     }
 
     private void refreshCommandsBox() {
-        if (commandsBox == null) return;
-        commandsBox.getChildren().clear();
+        if (commandsList == null) return;
+        commandsList.getChildren().clear();
         String[][] commands = {
             {":plants", MessageService.getValue("cmd.treat.description")},
             {":plants compost", MessageService.getValue("cmd.compost.description")},
@@ -199,12 +211,12 @@ public class PlantsController {
             {":plants abort", MessageService.getValue("cmd.abort.description")}
         };
         for (int i = 0; i < commands.length; i++) {
-            commandsBox.getChildren().add(createCommandRow(commands[i][0], commands[i][1], i));
+            commandsList.getChildren().add(createCommandRow(commands[i][0], commands[i][1], i));
         }
     }
 
     private void initCommandsBox() {
-        if (commandsBox == null) return;
+        if (commandsList == null) return;
         Platform.runLater(this::refreshCommandsBox);
     }
 
@@ -360,14 +372,17 @@ public class PlantsController {
     }
 
     public void updateConnectionState(boolean connected) {
-        Platform.runLater(() -> {
-            if (connectedLbl != null) {
-                connectedLbl.setText(connected ? MessageService.getValue("label.connected") : MessageService.getValue("label.not.connected"));
-                connectedLbl.setStyle(connected
-                        ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
-                        : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
-            }
-        });
+        lastConnected = connected;
+        Platform.runLater(() -> applyConnectionState(connected));
+    }
+
+    private void applyConnectionState(boolean connected) {
+        if (connectedLbl != null) {
+            connectedLbl.setText(connected ? MessageService.getValue("label.connected") : MessageService.getValue("label.not.connected"));
+            connectedLbl.setStyle(connected
+                    ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
+                    : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+        }
     }
 
     private static javafx.scene.shape.SVGPath createCopyIcon() {
@@ -410,14 +425,17 @@ public class PlantsController {
     }
 
     public void updateRoomState(boolean inRoom) {
-        Platform.runLater(() -> {
-            if (roomLbl != null) {
-                roomLbl.setText(inRoom ? MessageService.getValue("label.room.loaded") : MessageService.getValue("label.room.not.loaded"));
-                roomLbl.setStyle(inRoom
-                        ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
-                        : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
-            }
-        });
+        lastInRoom = inRoom;
+        Platform.runLater(() -> applyRoomState(inRoom));
+    }
+
+    private void applyRoomState(boolean inRoom) {
+        if (roomLbl != null) {
+            roomLbl.setText(inRoom ? MessageService.getValue("label.room.loaded") : MessageService.getValue("label.room.not.loaded"));
+            roomLbl.setStyle(inRoom
+                    ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;"
+                    : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;");
+        }
     }
 
     private void initSettingsControl() {

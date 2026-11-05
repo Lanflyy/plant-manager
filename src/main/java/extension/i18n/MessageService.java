@@ -1,5 +1,7 @@
 package extension.i18n;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -8,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+@Slf4j
 public final class MessageService {
 
     private static final String DEFAULT_LANGUAGE = "en";
@@ -30,22 +33,11 @@ public final class MessageService {
     }
 
     public static String getValue(String key) {
-        return getValue(key, currentLanguage);
-    }
-
-    public static String getValue(String key, String language) {
-        String value = lookupKey(key, language);
-        if (value == null) {
-            value = lookupKey(key, DEFAULT_LANGUAGE);
-        }
-        if (value == null) {
-            return key;
-        }
-        return value;
+        return resolve(key, currentLanguage);
     }
 
     public static String getValue(String key, Object... args) {
-        String pattern = getValue(key);
+        String pattern = resolve(key, currentLanguage);
         if (pattern.equals(key)) {
             return key;
         }
@@ -54,6 +46,26 @@ public final class MessageService {
         } catch (IllegalArgumentException e) {
             return pattern;
         }
+    }
+
+    /**
+     * Resolves a key for the given language without ever throwing: a missing key is logged
+     * and falls back to the default language, then to the key itself.
+     */
+    private static String resolve(String key, String language) {
+        String value = lookupKey(key, language);
+        if (value != null) {
+            return value;
+        }
+        log.error("missing key {} for language {}", key, language);
+        if (!DEFAULT_LANGUAGE.equals(language)) {
+            value = lookupKey(key, DEFAULT_LANGUAGE);
+            if (value != null) {
+                return value;
+            }
+            log.error("missing key {} for language {}", key, DEFAULT_LANGUAGE);
+        }
+        return key;
     }
 
     private static String lookupKey(String key, String language) {

@@ -31,7 +31,11 @@ import lombok.extern.slf4j.Slf4j;
 public class Plants extends ExtensionForm {
 
     @FXML
-    private VBox commandsBox;
+    private VBox commandsList;
+    @FXML
+    private Button btnReloadFurniData;
+    @FXML
+    private Button btnClearLogs;
     @FXML
     private TextArea logArea;
     @FXML
@@ -85,7 +89,7 @@ public class Plants extends ExtensionForm {
     private String currentHost;
 
     public void initialize() {
-        uiController = new PlantsController(commandsBox, logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers, connectedLbl, roomLbl, tabHome, tabLogs, tabSettings, lblState, lblLogLevel, lblAdvancedOptions, lblAutoAcceptBreeding, lblTrustedUsers, lblAvailableCommands);
+        uiController = new PlantsController(logArea, logLevelCombo, chkRequestPetInfo, btnPetInfoHelp, chkAutoBreed, cmbAutoBreedAcceptMode, chkAutoBreedRequireSameOrHigherRarity, txtAutoBreedUsername, btnAutoBreedAdd, btnAutoBreedRemove, tblAutoBreedUsers, connectedLbl, roomLbl, tabHome, tabLogs, tabSettings, lblState, lblLogLevel, lblAdvancedOptions, lblAutoAcceptBreeding, lblTrustedUsers, lblAvailableCommands, commandsList, btnReloadFurniData, btnClearLogs);
         uiController.initialize();
     }
 

@@ -44,7 +44,7 @@
                      <children>
 
                         <VBox spacing="4.0"
-                              prefWidth="170.0"
+                              prefWidth="220.0"
                               style="-fx-border-color: lightgrey; -fx-border-width: 1px; -fx-border-radius: 5px; -fx-padding: 8;">
                            <children>
                               <Label fx:id="lblState" text="State"
@@ -64,15 +64,15 @@
                                       alignment="CENTER"
                                       maxWidth="Infinity"
                                       style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 4 10; -fx-background-radius: 4;" />
-                               <Button text="Reload Furni Data"
+                               <Button fx:id="btnReloadFurniData"
+                                       text="Reload Furni Data"
                                        onAction="#onRequestFurniData"
                                        maxWidth="Infinity"
                                        prefHeight="25.0" />
                            </children>
                         </VBox>
 
-                        <VBox fx:id="commandsBox"
-                              spacing="0.0"
+                        <VBox spacing="0.0"
                               style="-fx-border-color: lightgrey; -fx-border-width: 1px; -fx-border-radius: 5px; -fx-padding: 1;"
                               VBox.vgrow="ALWAYS"
                               HBox.hgrow="ALWAYS">
@@ -80,6 +80,9 @@
                               <Label fx:id="lblAvailableCommands"
                                      text="Available commands:"
                                      style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 4 6;" />
+                              <VBox fx:id="commandsList"
+                                    spacing="0.0"
+                                    VBox.vgrow="ALWAYS" />
                            </children>
                         </VBox>
 
@@ -131,7 +134,8 @@
 
                         <Region HBox.hgrow="ALWAYS" />
 
-                        <Button text="Clear logs"
+                        <Button fx:id="btnClearLogs"
+                                text="Clear logs"
                                 onAction="#clearLogs" />
 
                      </children>
@@ -198,7 +202,7 @@
                                          minHeight="-Infinity"
                                          style="-fx-padding: 2 4 2 4;" />
                                <ComboBox fx:id="cmbAutoBreedAcceptMode"
-                                         prefWidth="160.0"
+                                         prefWidth="240.0"
                                          prefHeight="25.0"
                                          style="-fx-border-color:#000000; -fx-border-width:1; -fx-background-color:#ffffff; -fx-text-fill:#000000;" />
                             </children>
