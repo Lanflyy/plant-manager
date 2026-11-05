@@ -82,8 +82,7 @@
                 <version>3.8.1</version>
                 <configuration>
                     <encoding>${project.build.sourceEncoding}</encoding>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>21</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -100,7 +99,7 @@
         <dependency>
             <groupId>G-Earth</groupId>
             <artifactId>G-Earth-Api</artifactId>
-            <version>1.5.4-beta-29-SNAPSHOT-jdk18</version>
+            <version>1.5.4-beta-29-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
