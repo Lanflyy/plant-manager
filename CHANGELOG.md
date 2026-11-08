@@ -4,6 +4,45 @@ All notable changes to the Plant Manager extension will be documented in this fi
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+ 
+ ## [1.6.0] - 2026-11-08
+ ### Added
+ * Feature : Localize the whole extension depending on what G-Earth sent as language to Plant extension (defaulting to English)
+ * Feature : Upgrade to JDK 21
+ 
+ ### Fixed
+ * Bugfix : Fix a crash (NullPointerException) being thrown sometimes on extension start.
+ 
+ ## [1.5.1] - 2026-11-08
+ ### Fixed
+ * Bugfix : Seed functionality works now for non tradable monsterplant seeds.
+ 
+ ## [1.5.0] - 2026-11-08
+ ### Added
+ * Upgrade into G-Earth-API 1.5.4 (but keeping JDK 8 for now)
+ 
+ ### Fixed
+ * Bugfix : Huge downsize of the jar from ~20Mo => ~2Mo
+ 
+ ## [1.4.2] - 2026-11-08
+ ### Fixed
+ * Bugfix : Fix Furni Data cache mechanism with a mixture of max-age and hash file
+ 
+ ## [1.4.1] - 2026-11-08
+ ### Added
+ * Feature : Improve copy accessibility
+ 
+ ### Fixed
+ * Bugfix : "Do not check pet info" saved now in cache setting (when reopening the extension)
+ * Bugfix : Block received pet info when expecting it to now pop the plant UI during the treat process
+ 
+ ## [1.4.0] - 2026-11-08
+ ### Added
+ * Feature : Major UI rework
+ 
+ ### Fixed
+ * Bugfix : Detect Bulk added items (currently used for temporary items)
+ * Bugfix : Add loading of Furni Data (with a cache detection) to fix seed class id for hotels other than fr
 
 ## [1.3.3] - 2026-06-24
 ### Fixed
